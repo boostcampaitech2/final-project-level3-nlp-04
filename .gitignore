@@ -1,5 +1,6 @@
 # etc
 Devlog/
+.Devlog/
 .DS_Store
 .idea/
 
