@@ -142,7 +142,7 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	vocab = tok.get_vocab()
 	vocab = gluonnlp.vocab.BERTVocab(vocab,
 									mask_token=None,
-									sep_token=None,
+									sep_token='<sep>',
 									cls_token=None,
 									unknown_token='<unk>',
 									padding_token='<pad>',

@@ -54,7 +54,7 @@ class Read_Dataset(Dataset):
 
 		datasets = []
 		for _, row in df.iterrows():
-			datasets.append([row["review"], row["menu"], row["star"]])
+			datasets.append([row["menu"] + '+' + row["star"] + vocab.sep_token + row["review"]])
 			
 		print("tokenizer ending")
 		for line in datasets:
@@ -75,7 +75,7 @@ class Read_Dataset(Dataset):
 
 			#print(len(index_of_words))	
 			#print(line)
-			self.data.append([index_of_words, line[1], line[2]])
+			self.data.append([index_of_words])
 
 		print(np.shape(self.data))
 
