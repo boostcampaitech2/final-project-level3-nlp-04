@@ -162,7 +162,8 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	print('KoGPT-2 Transfer Learning Start')
 	avg_loss = (0.0, 0.0)
 	sents = []
-	word = "도넛+5<sep>오랜만에"
+	word = "던킨+도넛+5<sep>예전부터"
+	input_ver = "version 2"
 
 	for epoch in range(1, epoch+1):
 		pbar = tqdm(data_loader)
@@ -205,8 +206,8 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 		#    pass
 
 	sents = '\n'.join(sents)
-	f = open(samples + f'{word}_sample.txt', 'w', encoding="utf-8")
-	f.write(sent)
+	f = open(samples + f'{input_ver}_{word}_sample.txt', 'w', encoding="utf-8")
+	f.write(sents)
 	f.close()
 
 if __name__ == "__main__":
