@@ -226,6 +226,8 @@ def review_crawling(target_station, target_address, target_category):
             except:
                 image_list = ['-1']
 
+            image_str = ' '.join(image_list)
+            
             print(f'sumway_number : {target_station}')
             print(f'address : {target_address}')
             print(f"category: {target_category}")
@@ -238,12 +240,12 @@ def review_crawling(target_station, target_address, target_category):
             print(f"taste_star: {taste_star}")
             print(f"quantity_star: {quantity_star}")
             print(f"delivery_star: {delivery_star}")
-            print(f"image_url: {image_list})")
+            print(image_str)
             print("\n")
 
 
             main_list.append([brand, target_station.split()[1], target_address, user_id, written_review, review, menu, star, taste_star, \
-                         quantity_star, delivery_star, image_list])
+                         quantity_star, delivery_star, image_str])
         except :
             continue
 
