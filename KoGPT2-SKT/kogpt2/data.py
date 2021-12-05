@@ -57,7 +57,7 @@ class Read_Dataset(Dataset):
 
 		datasets = []
 		for _, row in df.iterrows():
-			datasets.append([row["menu"] + '+' + str(row["star"]) + self.vocab.sep_token + row["review"]])
+			datasets.append(['메뉴는 ' + row["menu"] + ' 별점은 ' + str(row["star"]) + '점' + self.vocab.sep_token + row["review"]])
 
 		print("tokenizer ending")
 		for line in datasets:
