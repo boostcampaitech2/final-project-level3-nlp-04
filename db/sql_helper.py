@@ -1,4 +1,7 @@
 import pymysql
+from sqlalchemy import *
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 import pandas as pd
 
 
@@ -10,17 +13,16 @@ class SqlHelper:
         self.user = user
         self.passwd = passwd
 
-    def insert(self, query):
+    def insert(self, df):
         conn = None
 
         try:
             # Open database connection
-            conn = pymysql.connect(host=self.host, port=self.port, user=self.user,
-                                   passwd=self.passwd, db=self.db_name, charset='utf8',
-                                   autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+            engine = create_engine(f'mysql://{self.user}:{self.passwd}@{self.host}/{self.db_name}?charset=utf8mb4')
 
-            cursor = conn.cursor()
-            cursor.execute(query)
+            conn = engine.connect()
+
+            df.to_sql(name='review', con=engine, if_exists='append', index=False)
 
         except Exception as e:
             print(e)
@@ -28,26 +30,6 @@ class SqlHelper:
             if conn is not None:
                 # disconnect from server
                 conn.close()
-
-    def update(self, query):
-        conn = None
-
-        try:
-            # Open database connection
-            conn = pymysql.connect(host=self.host, port=self.port, user=self.user,
-                                   passwd=self.passwd, db=self.db_name, charset='utf8',
-                                   autocommit=True, cursorclass=pymysql.cursors.DictCursor)
-
-            cursor = conn.cursor()
-            cursor.execute(query)
-
-        except Exception as e:
-            print(e)
-        finally:
-            if conn is not None:
-                # disconnect from server
-                conn.close()
-
 
     def get_df(self, query):
         data_frame = None
