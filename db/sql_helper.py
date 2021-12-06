@@ -1,7 +1,5 @@
 import pymysql
 from sqlalchemy import *
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import pandas as pd
 
 
@@ -38,7 +36,7 @@ class SqlHelper:
         try:
             # Open database connection
             conn = pymysql.connect(host=self.host, port=self.port, user=self.user,
-                                   passwd=self.passwd, db=self.db_name, charset='utf8',
+                                   passwd=self.passwd, db=self.db_name, charset='utf8mb4',
                                    autocommit=True, cursorclass=pymysql.cursors.DictCursor)
 
             cursor = conn.cursor()
