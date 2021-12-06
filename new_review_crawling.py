@@ -221,9 +221,7 @@ def review_crawling(target_station, target_address, target_category):
                 image_list = ['-1']
 
             image_str = ' '.join(image_list)
-            # user_id = user_id.replace('*', '-')
-            # menu = menu.replace(',', ' ').replace('(', '\(').replace(')', '\)')
-            
+
             print(f'sumway_number : {target_station}')
             print(f'address : {target_address}')
             print(f"category: {target_category}")
@@ -347,7 +345,12 @@ if response.status_code == 200:
         # DB 저장 파트 config.py 에서 DB 정보 불러옴
         sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
 
-        sql_helper.insert(df_total)
+        for i in range(len(df_total)):
+            try:
+                row_df = df_total[i:i+1]
+                sql_helper.insert(row_df)
+            except Exception as e:
+                print(e)
 
         main_list = []
 
