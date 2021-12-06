@@ -1,9 +1,10 @@
 # from _typeshed import WriteableBuffer
-
+from db.sql_helper import SqlHelper
 from subway_data import *
 from address_crawling import *
 from datetime import datetime
 import os
+import config as c
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -220,11 +221,12 @@ def review_crawling(target_station, target_address, target_category):
                 image_list = ['-1']
 
             image_str = ' '.join(image_list)
-            
+
             print(f'sumway_number : {target_station}')
             print(f'address : {target_address}')
             print(f"category: {target_category}")
             print(f"restaurant_name: {brand}")
+            print(f"min_cost: {min_cost}")
             print(f"user_id: {user_id}")
             print(f"review_create_time: {written_review}")
             print(f"review_context: {review}")
@@ -233,12 +235,12 @@ def review_crawling(target_station, target_address, target_category):
             print(f"taste_star: {taste_star}")
             print(f"quantity_star: {quantity_star}")
             print(f"delivery_star: {delivery_star}")
-            print(image_str)
+            print(f"image_str: {image_str}")
             print("\n")
 
 
-            main_list.append([brand, target_station.split()[1], target_address, user_id, written_review, review, menu, star, taste_star, \
-                         quantity_star, delivery_star, image_str])
+            main_list.append([brand, target_station.split()[1], target_address, user_id, written_review, review, menu,
+                              star, taste_star, quantity_star, delivery_star, image_str, min_cost])
         except :
             continue
 
@@ -263,8 +265,7 @@ def click_restaurant(target_station, target_address, target_category):
     prev_url = driver.current_url
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
-    # for i in range(1, number_of_restaurant+1):
-    for i in range(1, 2):
+    for i in range(1, number_of_restaurant+1):
         target_restaurant_name = restaurant_list[i - 1].split()[0]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
@@ -301,7 +302,7 @@ def address_page(target_station, target_address, sort_dist_flag, skip_flag):
 main_list = []
 category_dict = dict()
 url = 'https://www.yogiyo.co.kr/mobile/#/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C/135081/'
-category_name = ['1인분 주문']  # , '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
+category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
 # driver = webdriver.Chrome('./chromedriver')
 driver.get(url)
 response = requests.get(url)
@@ -323,25 +324,39 @@ if response.status_code == 200:
     target_statation = subway_data['station_name'].to_list()
     target_station_address = subway_data['address'].to_list()
     # 지하철 역을 주소로 주면서 search address 반보고하기
-    # for station, address in zip(target_statation, target_station_address):
-    for station, address in zip(['신도림', '역삼', '강남'], ['신도림동 460-26', '역삼동 804', '역삼동 858']):
+    for station, address in zip(target_statation, target_station_address):
+    # for station, address in zip(['신도림'], ['신도림동 460-26']):
         sort_dist_flag, skip_flag = address_page(station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag)
         skip_flag = False
 
-    df_main = pd.DataFrame(main_list)
-    category_dict = {k: ', '.join(v) for k, v in category_dict.items()}
-    df_category = pd.DataFrame.from_dict(category_dict, orient='index').rename(columns={0: 'category_name'})
-    df_category = df_category.reset_index().rename(columns={'index': 'restuarant_name'})
-    # df_category['restuarant_name'] = df_category.index
-    df_main.rename(columns={0: 'restuarant_name', 1: 'subway', 2: 'address', 3: 'user_id',
-                            4: 'review_create_time', 5: 'review_context', 6: 'menu',
-                            7: 'total_star', 8: 'taste_star', 9: 'quantity_star',
-                            10: 'delivery_star', 11: 'image_url'}, inplace=True)
-    df_total = pd.merge(df_main, df_category, how='left', on='restuarant_name')
-    current_time = datetime.now()
-    df_main.to_csv(f'pilot_main_{current_time}.csv', encoding='utf-8')
-    df_category.to_csv(f'pilot_category_{current_time}.csv', encoding='utf-8')
-    df_total.to_csv(f'pilot_total_{current_time}.csv', encoding='utf-8')
+        df_main = pd.DataFrame(main_list)
+        category_dict = {k: ', '.join(v) for k, v in category_dict.items()}
+        df_category = pd.DataFrame.from_dict(category_dict, orient='index').rename(columns={0: 'category_name'})
+        df_category = df_category.reset_index().rename(columns={'index': 'restaurant_name'})
+        # df_category['restuarant_name'] = df_category.index
+        df_main.rename(columns={0: 'restaurant_name', 1: 'subway', 2: 'address', 3: 'user_id',
+                                4: 'review_create_time', 5: 'review_context', 6: 'menu',
+                                7: 'total_star', 8: 'taste_star', 9: 'quantity_star',
+                                10: 'delivery_star', 11: 'image_url', 12: 'min_cost'}, inplace=True)
+        df_total = pd.merge(df_main, df_category, how='left', on='restaurant_name')
+
+        current_time = datetime.now()
+
+        # DB 저장 파트 config.py 에서 DB 정보 불러옴
+        sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
+
+        for i in range(len(df_total)):
+            try:
+                row_df = df_total[i:i+1]
+                sql_helper.insert(row_df)
+            except Exception as e:
+                print(e)
+
+        main_list = []
+
+    # df_main.to_csv(f'pilot_main_{current_time}.csv', encoding='utf-8')
+    # df_category.to_csv(f'pilot_category_{current_time}.csv', encoding='utf-8')
+    # df_total.to_csv(f'pilot_total_{current_time}.csv', encoding='utf-8')
 
 else:
     print(response.status_code)
