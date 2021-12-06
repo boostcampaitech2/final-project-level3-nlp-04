@@ -17,8 +17,8 @@ parser.add_argument('--top_k', type=int, default=40,
 					help="top_k 를 통해서 글의 표현 범위를 조절합니다.")
 parser.add_argument('--text_size', type=int, default=250,
 					help="결과물의 길이를 조정합니다.")
-parser.add_argument('--loops', type=int, default=-1,
-					help="글을 몇 번 반복할지 지정합니다. -1은 무한반복입니다.")
+parser.add_argument('--loops', type=int, default=0,
+					help="글을 몇 번 반복할지 지정합니다. 0은 무한반복입니다.")
 parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>예전부터",
 					help="글의 시작 문장입니다.")
 parser.add_argument('--load_path', type=str, default="./checkpoint/KoGPT2_checkpoint_50.tar",
