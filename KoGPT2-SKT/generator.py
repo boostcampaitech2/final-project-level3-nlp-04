@@ -21,7 +21,7 @@ parser.add_argument('--loops', type=int, default=3,
 					help="글을 몇 번 반복할지 지정합니다. 0은 무한반복입니다.")
 parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>",
 					help="글의 시작 문장입니다.")
-parser.add_argument('--load_path', type=str, default="./checkpoint/KoGPT2_checkpoint_50.tar",
+parser.add_argument('--load_path', type=str, default="./checkpoint/way3/KoGPT2_checkpoint_50.tar",
 					help="학습된 결과물을 저장하는 경로입니다.")
 
 args = parser.parse_args()
@@ -79,7 +79,7 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 	# kogpt2model.eval()
 	vocab = gluonnlp.vocab.BERTVocab(vocab,
 									 mask_token=None,
-									 sep_token=None,
+									 sep_token='<sep>',
 									 cls_token=None,
 									 unknown_token='<unk>',
 									 padding_token='<pad>',
@@ -106,6 +106,8 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 		tmp_sent = input('input : ')
 
 	sents = []
+	f = open(os.path.join(load_path, 'generated_texts.txt'), 'w', encoding="utf-8")
+
 	while 1:
 		sent = tmp_sent
 
@@ -119,21 +121,21 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 		sent = sent.replace("</s>", "") 
 		sent = auto_enter(sent)
 		sents.append(sent)
-		
-		head = [load_path, tmp_sent, sent, text_size, temperature, top_p, top_k]
-		head = [str(h) for h in head]
-		sents += ', '.join(head) + '\n'
+
+		head = [load_path, tmp_sent, sent.replace('<pad>', ''), str(text_size), str(temperature), str(top_p), str(top_k)]
+		# print("head : ", head)
+		# for h in head:
+		# 	print(h)
+		f.write(', '.join(head) + '\n')
 
 		#tmp_sent = ""
 
 		if num != 0:
 			if num >= loops:
 				print("good")
-				return
+				break
 			num += 1
 
-	f = open(os.path.join(load_path, 'generated texts'), 'w', encoding="utf-8")
-	f.write(sents)
 	f.close()
 
 if __name__ == "__main__":
