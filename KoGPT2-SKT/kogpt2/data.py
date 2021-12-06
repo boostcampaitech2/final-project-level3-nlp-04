@@ -57,13 +57,13 @@ class Read_Dataset(Dataset):
 
 		datasets = []
 		for _, row in df.iterrows():
-			datasets.append([row["brand"] + '+' + row["menu"] + '+' + str(row["star"]) + self.vocab.sep_token + row["review"]])
+			datasets.append(['메뉴는 ' + row["menu"] + ' 별점은 ' + str(row["star"]) + '점인 리뷰를 만들어줘' + self.vocab.sep_token + row["review"]])
 
 		print("tokenizer ending")
 		for line in datasets:
 			if not line[0]:
 				break
-			if len(line[0]) < 30:
+			if len(line[0]) < 45:
 				continue
 			toeknized_line = tokenizer.tokenize(line[0][:-1])
 			toeknized_line = toeknized_line[:100]

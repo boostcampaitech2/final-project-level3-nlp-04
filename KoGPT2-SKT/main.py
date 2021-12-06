@@ -14,17 +14,17 @@ import re
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epoch', type=int, default=200,
+parser.add_argument('--epoch', type=int, default=50,
 					help="epoch 를 통해서 학습 범위를 조절합니다.")
-parser.add_argument('--save_path', type=str, default='./checkpoint/',
+parser.add_argument('--save_path', type=str, default='',
 					help="학습 결과를 저장하는 경로입니다.")
 parser.add_argument('--load_path', type=str, default='./checkpoint/Alls/KoGPT2_checkpoint_296000.tar', #
 					help="학습된 결과를 불러오는 경로입니다.")
 parser.add_argument('--samples', type=str, default="samples/",
 					help="생성 결과를 저장할 경로입니다.")
-parser.add_argument('--data_file_path', type=str, default='dataset/lyrics_dataset.txt',
+parser.add_argument('--data_file_path', type=str, default='./review.csv',
 					help="학습할 데이터를 불러오는 경로입니다.")
-parser.add_argument('--batch_size', type=int, default=8,
+parser.add_argument('--batch_size', type=int, default=32,
 					help="batch_size 를 지정합니다.")
 args = parser.parse_args()
 
@@ -162,9 +162,9 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	print('KoGPT-2 Transfer Learning Start')
 	avg_loss = (0.0, 0.0)
 	sents = []
-	word = "던킨+도넛+5<sep>예전부터"
-	input_ver = "version 2"
 
+	word = "메뉴는 도넛 별점은 5점인 리뷰를 만들어줘<sep>예전부터"
+	print(args)
 	for epoch in range(1, epoch+1):
 		pbar = tqdm(data_loader)
 		for idx, data in enumerate(pbar):
@@ -190,25 +190,26 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 		sent = sent.replace('<pad>', '')
 		print(sent)
 
-
 		sents.append(f'{epoch} : {sent}')
 
 		# 모델 저장
 		# try:
-		if not epoch % 5:
+		if not epoch % 10:
 			torch.save({
 				'epoch': epoch,
 				'model_state_dict': model.state_dict(),
 				'optimizer_state_dict': optimizer.state_dict(),
 				'loss': loss
-			}, save_path + 'KoGPT2_checkpoint_' + str(epoch) + '.tar')
+			}, f'{save_path}/KoGPT2_checkpoint_{str(epoch)}.tar')
 		# except:
 		#    pass
 
 	sents = '\n'.join(sents)
-	f = open(samples + f'{input_ver}_{word}_sample.txt', 'w', encoding="utf-8")
+	f = open(samples + f'{word}_sample.txt', 'w', encoding="utf-8")
 	f.write(sents)
 	f.close()
 
 if __name__ == "__main__":
+	assert args.save_path
+	args.save_path = os.path.join('checkpoint/', args.save_path)
 	main(args.epoch, args.save_path, args.load_path, args.samples, args.data_file_path, args.batch_size)
