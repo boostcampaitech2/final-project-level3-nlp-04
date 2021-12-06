@@ -1,6 +1,7 @@
 import pymysql
 from sqlalchemy import *
 import pandas as pd
+from collections import OrderedDict
 
 
 class SqlHelper:
@@ -11,7 +12,7 @@ class SqlHelper:
         self.user = user
         self.passwd = passwd
 
-    def insert(self, df):
+    def insert(self, df, table_name='review'):
         conn = None
 
         try:
@@ -20,7 +21,7 @@ class SqlHelper:
 
             conn = engine.connect()
 
-            df.to_sql(name='review', con=engine, if_exists='append', index=False)
+            df.to_sql(name=table_name, con=engine, if_exists='append', index=False)
 
         except Exception as e:
             print(e)
@@ -43,8 +44,10 @@ class SqlHelper:
             cursor.execute(query)
 
             result = cursor.fetchall()
+            result = map(OrderedDict, result)
             data_frame = pd.DataFrame(result)
             data_frame.columns = map(str.lower, data_frame.columns)
+
         except Exception as e:
             print(e)
         finally:
