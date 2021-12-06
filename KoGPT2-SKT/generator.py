@@ -21,28 +21,11 @@ parser.add_argument('--loops', type=int, default=3,
 					help="글을 몇 번 반복할지 지정합니다. 0은 무한반복입니다.")
 parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>",
 					help="글의 시작 문장입니다.")
-parser.add_argument('--load_path', type=str, default="./checkpoint/way3/KoGPT2_checkpoint_50.tar",
+parser.add_argument('--load_path', type=str, default="./checkpoint/way4/KoGPT2_checkpoint_50.tar",
 					help="학습된 결과물을 저장하는 경로입니다.")
 
 args = parser.parse_args()
 
-pytorch_kogpt2 = {
-	'url':
-	'checkpoint/pytorch_kogpt2_676e9bcfa7.params',
-	'fname': 'pytorch_kogpt2_676e9bcfa7.params',
-	'chksum': '676e9bcfa7'
-}
-
-kogpt2_config = {
-	"initializer_range": 0.02,
-	"layer_norm_epsilon": 1e-05,
-	"n_ctx": 1024,
-	"n_embd": 768,
-	"n_head": 12,
-	"n_layer": 12,
-	"n_positions": 1024,
-	"vocab_size": 50000
-}
 
 def auto_enter(text):
 	text = (text.replace("   ", "\n"))
@@ -51,11 +34,9 @@ def auto_enter(text):
 	text = [t.lstrip() for t in text if t != '']
 	return "\n\n".join(text)
 
+
 def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 100, loops = 0, load_path = ""):
 	ctx = 'cuda'
-	cachedir = '~/kogpt2/'
-	save_path = './checkpoint/'
-	# download model
 
 	# Device 설정
 	device = torch.device(ctx)
@@ -105,38 +86,67 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 	if tmp_sent == "":
 		tmp_sent = input('input : ')
 
-	sents = []
-	f = open(os.path.join(load_path, 'generated_texts.txt'), 'w', encoding="utf-8")
 
-	while 1:
-		sent = tmp_sent
 
-		toked = tok.tokenize(sent)
+	# "메뉴는 "메뉴" 별점은 "별점[SEP]리뷰
+	way3 = [
+		"메뉴는 찜 별점은 5점<sep>",
+		"메뉴는 치킨 별점은 1점<sep>",
+		"메뉴는 샤브샤브 별점은 5점<sep>",
+		"메뉴는 간장게장 별점은 1점<sep>",
+		"메뉴는 김밥 별점은 5점<sep>",
+		"메뉴는 찌개 별점은 1점<sep>",
+		"메뉴는 랍스타 별점은 5점<sep>",
+		"메뉴는 버섯전골 별점은 1점<sep>",
+	]
 
-		if len(toked) > 1022:
-			break
+	# "메뉴는"메뉴"별점은"별점"인 리뷰를 만들어줘"[SEP]리뷰
+	way4 = [
+		"메뉴는 찜 별점은 5점인 리뷰를 만들어줘<sep>",
+		"메뉴는 치킨 별점은 1점인 리뷰를 만들어줘<sep>",
+		"메뉴는 샤브샤브 별점은 5점인 리뷰를 만들어줘<sep>",
+		"메뉴는 간장게장 별점은 1점인 리뷰를 만들어줘<sep>",
+		"메뉴는 김밥 별점은 5점인 리뷰를 만들어줘<sep>",
+		"메뉴는 찌개 별점은 1점인 리뷰를 만들어줘<sep>",
+		"메뉴는 랍스타 별점은 5점인 리뷰를 만들어줘<sep>",
+		"메뉴는 버섯전골 별점은 1점인 리뷰를 만들어줘<sep>",
+	]
 
-		sent = sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_k)
-		sent = sent.replace("//", "\n") # 비효율적이지만 엔터를 위해서 등장
-		sent = sent.replace("</s>", "") 
-		sent = auto_enter(sent)
-		sents.append(sent)
+	for idx, tmp_sent in enumerate(way3, 1):
+		num = 1
+		sents = []
+		f = open(os.path.join(load_path, f'generated_texts{idx}.txt'), 'w', encoding="utf-8")
 
-		head = [load_path, tmp_sent, sent.replace('<pad>', ''), str(text_size), str(temperature), str(top_p), str(top_k)]
-		# print("head : ", head)
-		# for h in head:
-		# 	print(h)
-		f.write(', '.join(head) + '\n')
+		while 1:
+			sent = tmp_sent
 
-		#tmp_sent = ""
+			toked = tok.tokenize(sent)
 
-		if num != 0:
-			if num >= loops:
-				print("good")
+			if len(toked) > 1022:
 				break
-			num += 1
 
-	f.close()
+			sent = sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_k)
+			sent = sent.replace("//", "\n") # 비효율적이지만 엔터를 위해서 등장
+			sent = sent.replace("</s>", "")
+			sent = auto_enter(sent)
+			sents.append(sent)
+
+			head = [load_path, tmp_sent, sent.replace('<pad>', ''), str(text_size), str(temperature), str(top_p), str(top_k)]
+			# print("head : ", head)
+			# for h in head:
+			# 	print(h)
+			f.write(', '.join(head) + '\n')
+
+			#tmp_sent = ""
+
+			if num != 0:
+				if num >= loops:
+					print("good")
+					break
+				num += 1
+
+		f.close()
+
 
 if __name__ == "__main__":
 	# execute only if run as a script
