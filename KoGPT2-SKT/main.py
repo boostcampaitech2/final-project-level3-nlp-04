@@ -162,6 +162,7 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	print('KoGPT-2 Transfer Learning Start')
 	avg_loss = (0.0, 0.0)
 	sents = []
+
 	word = "메뉴는 도넛 별점은 5점<sep>예전부터"
 
 	for epoch in range(1, epoch+1):
@@ -189,7 +190,6 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 		sent = sent.replace('<pad>', '')
 		print(sent)
 
-
 		sents.append(f'{epoch} : {sent}')
 
 		# 모델 저장
@@ -206,7 +206,7 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 
 	sents = '\n'.join(sents)
 	f = open(samples + f'{word}_sample.txt', 'w', encoding="utf-8")
-	f.write(sent)
+	f.write(sents)
 	f.close()
 
 if __name__ == "__main__":

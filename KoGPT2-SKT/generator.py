@@ -19,9 +19,9 @@ parser.add_argument('--text_size', type=int, default=250,
 					help="결과물의 길이를 조정합니다.")
 parser.add_argument('--loops', type=int, default=-1,
 					help="글을 몇 번 반복할지 지정합니다. -1은 무한반복입니다.")
-parser.add_argument('--tmp_sent', type=str, default="사랑",
+parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>예전부터",
 					help="글의 시작 문장입니다.")
-parser.add_argument('--load_path', type=str, default="./checkpoint/ent/KoGPT2_checkpoint_37000.tar",
+parser.add_argument('--load_path', type=str, default="./checkpoint/KoGPT2_checkpoint_50.tar",
 					help="학습된 결과물을 저장하는 경로입니다.")
 
 args = parser.parse_args()
@@ -56,39 +56,39 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 	cachedir = '~/kogpt2/'
 	save_path = './checkpoint/'
 	# download model
-	model_info = pytorch_kogpt2
-	model_path = download(model_info['url'],
-						  model_info['fname'],
-						  model_info['chksum'],
-						  cachedir=cachedir)
-	# download vocab
-	vocab_info = tokenizer
-	vocab_path = download(vocab_info['url'],
-						  vocab_info['fname'],
-						  vocab_info['chksum'],
-						  cachedir=cachedir)
+
 	# Device 설정
 	device = torch.device(ctx)
 	# 저장한 Checkpoint 불러오기
 	checkpoint = torch.load(load_path, map_location=device)
 
-	# KoGPT-2 언어 모델 학습을 위한 GPT2LMHeadModel 선언
-	kogpt2model = GPT2LMHeadModel(config=GPT2Config.from_dict(kogpt2_config))
-	kogpt2model.load_state_dict(checkpoint['model_state_dict'])
+	from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
+	model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2')
+	model.load_state_dict(checkpoint['model_state_dict'])
+	model.eval()
 
-	kogpt2model.eval()
-	vocab_b_obj = gluonnlp.vocab.BERTVocab.from_sentencepiece(vocab_path,
-															  mask_token=None,
-															  sep_token=None,
-															  cls_token=None,
-															  unknown_token='<unk>',
-															  padding_token='<pad>',
-															  bos_token='<s>',
-															  eos_token='</s>')
+	tok = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
+												  bos_token='<s>', eos_token='</s>', unk_token='<unk>',
+												  pad_token='<pad>', mask_token='<mask>', sep_token='<sep>')
+	vocab = tok.get_vocab()
 
-	tok_path = get_tokenizer()
-	model, vocab = kogpt2model, vocab_b_obj
-	tok = SentencepieceTokenizer(tok_path)
+	# # KoGPT-2 언어 모델 학습을 위한 GPT2LMHeadModel 선언
+	# kogpt2model = GPT2LMHeadModel(config=GPT2Config.from_dict(kogpt2_config))
+	# kogpt2model.load_state_dict(checkpoint['model_state_dict'])
+
+	# kogpt2model.eval()
+	vocab = gluonnlp.vocab.BERTVocab(vocab,
+									 mask_token=None,
+									 sep_token=None,
+									 cls_token=None,
+									 unknown_token='<unk>',
+									 padding_token='<pad>',
+									 bos_token='<s>',
+									 eos_token='</s>')
+
+	# tok_path = get_tokenizer()
+	# model, vocab = kogpt2model, vocab_b_obj
+	# tok = SentencepieceTokenizer(tok_path)
 
 	if loops:
 		num = 1
@@ -108,10 +108,9 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 		os.makedirs(os.path.join("samples/"+ load_path))
 
 	while 1:
-		sent =''
 		if tmp_sent == "":
 			tmp_sent = input('input : ')
-		sent = sent+tmp_sent
+		sent = tmp_sent
 
 		toked = tok(sent)
 
