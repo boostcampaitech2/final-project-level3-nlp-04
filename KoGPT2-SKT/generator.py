@@ -17,9 +17,9 @@ parser.add_argument('--top_k', type=int, default=40,
 					help="top_k 를 통해서 글의 표현 범위를 조절합니다.")
 parser.add_argument('--text_size', type=int, default=250,
 					help="결과물의 길이를 조정합니다.")
-parser.add_argument('--loops', type=int, default=0,
+parser.add_argument('--loops', type=int, default=3,
 					help="글을 몇 번 반복할지 지정합니다. 0은 무한반복입니다.")
-parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>예전부터",
+parser.add_argument('--tmp_sent', type=str, default="메뉴는 도넛 별점을 5점인 리뷰를 만들어줘<sep>",
 					help="글의 시작 문장입니다.")
 parser.add_argument('--load_path', type=str, default="./checkpoint/KoGPT2_checkpoint_50.tar",
 					help="학습된 결과물을 저장하는 경로입니다.")
@@ -95,24 +95,21 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 	else:
 		num = 0
 
-	try:
-		load_path.split("/")[-2]
-	except:
-		pass
-	else:
-		load_path = load_path.split("/")[-2]
+	load_path = '/'.join(load_path.split("/")[:-1])
 
 	print("ok : ",load_path)
 
-	if not(os.path.isdir("samples/"+ load_path)):
-		os.makedirs(os.path.join("samples/"+ load_path))
+	if not(os.path.isdir(load_path)):
+		os.makedirs(os.path.join(load_path))
 
+	if tmp_sent == "":
+		tmp_sent = input('input : ')
+
+	sents = []
 	while 1:
-		if tmp_sent == "":
-			tmp_sent = input('input : ')
 		sent = tmp_sent
 
-		toked = tok(sent)
+		toked = tok.tokenize(sent)
 
 		if len(toked) > 1022:
 			break
@@ -121,31 +118,23 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 		sent = sent.replace("//", "\n") # 비효율적이지만 엔터를 위해서 등장
 		sent = sent.replace("</s>", "") 
 		sent = auto_enter(sent)
-		print(sent)
-
-		now = [int(n) for n in os.listdir("./samples/" + load_path)]
+		sents.append(sent)
 		
-		try:
-			now = max(now)
-		except:
-			now = 1
-
-		f = open("samples/"+ load_path + "/" + str(now + 1), 'w', encoding="utf-8")
-		
-		head = [load_path, tmp_sent, text_size, temperature, top_p, top_k]
+		head = [load_path, tmp_sent, sent, text_size, temperature, top_p, top_k]
 		head = [str(h) for h in head]
-		f.write(",".join(head))
-		f.write(",")
-		f.write(sent)
-		f.close()
+		sents += ', '.join(head) + '\n'
 
 		#tmp_sent = ""
 
 		if num != 0:
-			num += 1
 			if num >= loops:
 				print("good")
 				return
+			num += 1
+
+	f = open(os.path.join(load_path, 'generated texts'), 'w', encoding="utf-8")
+	f.write(sents)
+	f.close()
 
 if __name__ == "__main__":
 	# execute only if run as a script

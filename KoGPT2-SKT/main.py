@@ -16,7 +16,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--epoch', type=int, default=50,
 					help="epoch 를 통해서 학습 범위를 조절합니다.")
-parser.add_argument('--save_path', type=str, default='./checkpoint/',
+parser.add_argument('--save_path', type=str, default='',
 					help="학습 결과를 저장하는 경로입니다.")
 parser.add_argument('--load_path', type=str, default='./checkpoint/Alls/KoGPT2_checkpoint_296000.tar', #
 					help="학습된 결과를 불러오는 경로입니다.")
@@ -164,8 +164,7 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	sents = []
 
 	word = "메뉴는 도넛 별점은 5점인 리뷰를 만들어줘<sep>예전부터"
-	args.save_path = os.path.join(args.save_path, word)
-
+	print(args)
 	for epoch in range(1, epoch+1):
 		pbar = tqdm(data_loader)
 		for idx, data in enumerate(pbar):
@@ -211,4 +210,6 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	f.close()
 
 if __name__ == "__main__":
+	assert args.save_path
+	args.save_path = os.path.join('checkpoint/', args.save_path)
 	main(args.epoch, args.save_path, args.load_path, args.samples, args.data_file_path, args.batch_size)
