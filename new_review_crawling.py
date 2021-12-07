@@ -283,8 +283,8 @@ def click_category(driver, target, search_address_keyword):
 # 식당을 클릭하고 review_crawling 함수를 통해서 해당 식당을 크롤링한다.
 def click_restaurant(driver, target_station, target_address, target_category, subway):
     # 현재 페이지에서 요기요 등록점 식당에 대해서 정보를 얻어온다. test할때는 한 번에 50개 정도의 식당정보가 나왔습니다.
-    restaurant_list = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div').text.split(
-        '\n\n\n\n')
+    restaurant_list = driver.find_elements(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div')
+    restaurant_list = [name.text.split()[5] if name.text.split()[0] == '현재' else name.text.split()[0] for name in restaurant_list]
     number_of_restaurant = len(restaurant_list)
     print(number_of_restaurant)
 
@@ -294,7 +294,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
     # for i in range(1, 3):
     for i in range(1, int((number_of_restaurant + 1) / 4)):
-        target_restaurant_name = restaurant_list[i - 1].split()[0]
+        target_restaurant_name = restaurant_list[i]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
             if target_category not in category_value:
