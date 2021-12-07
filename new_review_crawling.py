@@ -386,12 +386,7 @@ if __name__ == '__main__':
 
             end_crawling_time = time.time()
 
-            for i in range(len(df_total)):
-                try:
-                    row_df = df_total[i:i+1]
-                    sql_helper.insert(row_df)
-                except Exception as e:
-                    print(e)
+            sql_helper.insert(df_total)
 
             print(f'{station}역 {address} 배달업체 DB insert 완료!')
 
