@@ -306,6 +306,7 @@ category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식',
 # driver = webdriver.Chrome('./chromedriver')
 driver.get(url)
 response = requests.get(url)
+start_time = time.time()
 
 if response.status_code == 200:
     # 거리 기준 정렬을 했는지 표시하는 boolean 변수
@@ -344,12 +345,21 @@ if response.status_code == 200:
         # DB 저장 파트 config.py 에서 DB 정보 불러옴
         sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
 
+        end_crawling_time = time.time()
+
         for i in range(len(df_total)):
             try:
                 row_df = df_total[i:i+1]
                 sql_helper.insert(row_df)
             except Exception as e:
                 print(e)
+
+        end_work_time = time.time()
+
+        print('*'*20)
+        print(f'total crawling time : {end_crawling_time-start_time}')
+        print('*' * 20)
+        print(f'total work time : {end_work_time-start_time}')
 
         main_list = []
 
