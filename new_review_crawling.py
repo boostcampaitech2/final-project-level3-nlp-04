@@ -18,6 +18,8 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+import argparse
+
 def get_option_chrome():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
@@ -232,7 +234,7 @@ def review_crawling(driver, target_station, target_address, target_category):
             print("\n")
 
 
-            main_list.append([brand, target_station.split()[1], target_address, user_id, written_review, review, menu,
+            main_list.append([brand, target_station, target_address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
         except :
             continue
@@ -332,6 +334,10 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
 if __name__ == '__main__':
     os.system('pkill chrome')
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
+    args = parser.parse_args()
+
     # 서버에서 실행 시 수행
     driver = get_option_chrome()
 
@@ -363,8 +369,15 @@ if __name__ == '__main__':
         subway_number2 = subway_data['subway_name'][0]
         target_statation = subway_data['station_name'].to_list()
         target_station_address = subway_data['address'].to_list()
+
+        start_point = (1-args.num) * 7
+        end_point = 7 * args.num
+        if args.num == 7:
+            end_point = len(target_statation)
+
+
         # 지하철 역을 주소로 주면서 search address 반보고하기
-        for station, address in zip(target_statation[0:7], target_station_address[0:7]):
+        for station, address in zip(target_statation[start_point:end_point], target_station_address[start_point:end_point]):
         # for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
             driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag)
             skip_flag = False
