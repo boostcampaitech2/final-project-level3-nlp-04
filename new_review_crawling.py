@@ -407,9 +407,9 @@ if __name__ == '__main__':
             end_work_time = time.time()
 
             print('*'*20)
-            print(f'total crawling time : {end_crawling_time-start_time}')
+            print(f'total crawling time : {end_crawling_time-start_time} 초')
             print('*' * 20)
-            print(f'total work time : {end_work_time-start_time}')
+            print(f'total work time : {end_work_time-start_time} 초')
 
             main_list = []
 
