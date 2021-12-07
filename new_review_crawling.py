@@ -297,14 +297,14 @@ def click_restaurant(driver, target_station, target_address, target_category):
         category_dict[target_restaurant_name] = [target_category]
         target_restaurant = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div:nth-child(' + str(i) + ') > div')
         target_restaurant.click()
-        WebDriverWait(driver, 2).until(
+        WebDriverWait(driver, 5).until(
             EC.visibility_of_all_elements_located(
                 (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
         )
         driver = review_crawling(driver, target_station, target_address, target_category)
         driver.get(prev_url)
         start = time.time()
-        WebDriverWait(driver, 3).until(
+        WebDriverWait(driver, 5).until(
             EC.visibility_of_all_elements_located(
                 (By.CSS_SELECTOR,
                  '#content > div > div:nth-child(5) > div'))
@@ -330,7 +330,6 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
 
 
 if __name__ == '__main__':
-    os.system('pkill chrome')
 
     # 서버에서 실행 시 수행
     driver = get_option_chrome()
