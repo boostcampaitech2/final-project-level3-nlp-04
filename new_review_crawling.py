@@ -364,8 +364,8 @@ if __name__ == '__main__':
         target_statation = subway_data['station_name'].to_list()
         target_station_address = subway_data['address'].to_list()
         # 지하철 역을 주소로 주면서 search address 반보고하기
-        # for station, address in zip(target_statation, target_station_address):
-        for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
+        for station, address in zip(target_statation[0:7], target_station_address[0:7]):
+        # for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
             driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag)
             skip_flag = False
 
