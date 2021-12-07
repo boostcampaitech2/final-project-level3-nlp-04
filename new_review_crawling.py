@@ -249,7 +249,7 @@ def click_category(driver, target, search_address_keyword):
     driver.quit()
     os.system('pkill chrome')
     driver= get_option_chrome()
-    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver = webdriver.Chrome('.\chromedriver.exe')
     driver.get(current_url)
 
     search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
@@ -299,20 +299,25 @@ def click_restaurant(driver, target_station, target_address, target_category):
         category_dict[target_restaurant_name] = [target_category]
         target_restaurant = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div:nth-child(' + str(i) + ') > div')
         target_restaurant.click()
-        WebDriverWait(driver, 5).until(
-            EC.visibility_of_all_elements_located(
-                (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
-        )
-        driver = review_crawling(driver, target_station, target_address, target_category)
-        driver.get(prev_url)
-        start = time.time()
-        WebDriverWait(driver, 5).until(
-            EC.visibility_of_all_elements_located(
-                (By.CSS_SELECTOR,
-                 '#content > div > div:nth-child(5) > div'))
-        )
-        end = time.time()
-        print(end-start)
+        
+        try:
+            WebDriverWait(driver, 20).until(
+                EC.visibility_of_all_elements_located(
+                    (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
+            )
+            driver = review_crawling(driver, target_station, target_address, target_category)
+            driver.get(prev_url)
+            start = time.time()
+            WebDriverWait(driver, 20).until(
+                EC.visibility_of_all_elements_located(
+                    (By.CSS_SELECTOR,
+                    '#content > div > div:nth-child(5) > div'))
+            )
+            end = time.time()
+            print(end-start)
+        except:
+            driver.get(prev_url)
+            time.sleep(5)
 
     return driver
 
@@ -334,13 +339,13 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
+    parser.add_argument('--num', default=3, type=int, help='자신이 맡은 번호를 입력해주세요.')
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
     driver = get_option_chrome()
 
-    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver = webdriver.Chrome('.\chromedriver.exe')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
