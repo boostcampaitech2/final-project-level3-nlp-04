@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from tqdm import tqdm
 import pandas as pd
 import time
 from bs4 import BeautifulSoup
@@ -330,8 +331,8 @@ if response.status_code == 200:
         skip_flag = False
 
         df_main = pd.DataFrame(main_list)
-        category_dict = {k: ', '.join(v) for k, v in category_dict.items()}
-        df_category = pd.DataFrame.from_dict(category_dict, orient='index').rename(columns={0: 'category_name'})
+        category_dict_new = {k: ', '.join(v) for k, v in category_dict.items()}
+        df_category = pd.DataFrame.from_dict(category_dict_new, orient='index').rename(columns={0: 'category_name'})
         df_category = df_category.reset_index().rename(columns={'index': 'restaurant_name'})
         # df_category['restuarant_name'] = df_category.index
         df_main.rename(columns={0: 'restaurant_name', 1: 'subway', 2: 'address', 3: 'user_id',
@@ -345,13 +346,16 @@ if response.status_code == 200:
         # DB 저장 파트 config.py 에서 DB 정보 불러옴
         sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
 
-        for i in range(len(df_total)):
+        for i in tqdm(range(len(df_total))):
             try:
                 row_df = df_total[i:i+1]
                 sql_helper.insert(row_df)
             except Exception as e:
                 print(e)
 
+        print(f'{station}역 {address} 배달업체 DB insert 완료!')
+
+        # main_list 초기화
         main_list = []
 
     # df_main.to_csv(f'pilot_main_{current_time}.csv', encoding='utf-8')
