@@ -3,6 +3,7 @@ from sqlalchemy import *
 import pandas as pd
 from collections import OrderedDict
 
+pymysql.install_as_MySQLdb()
 
 class SqlHelper:
     def __init__(self, host, port, db_name, user, passwd):
