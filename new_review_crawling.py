@@ -390,7 +390,7 @@ if __name__ == '__main__':
                                     4: 'review_create_time', 5: 'review_context', 6: 'menu',
                                     7: 'total_star', 8: 'taste_star', 9: 'quantity_star',
                                     10: 'delivery_star', 11: 'image_url', 12: 'min_cost'}, inplace=True)
-            df_total = pd.merge(df_main, df_category, how='left', on='restaurant_name')
+            df_total = pd.merge(df_main, df_category, how='left', on='restaurant_name').drop_duplicates()
 
             current_time = datetime.now()
 
