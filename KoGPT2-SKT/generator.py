@@ -112,7 +112,7 @@ def main(temperature = 0.7, top_p = 0.8, top_k = 40, tmp_sent = "", text_size = 
 		"메뉴는 버섯전골 별점은 1점인 리뷰를 만들어줘<sep>",
 	]
 
-	for idx, tmp_sent in enumerate(way3, 1):
+	for idx, tmp_sent in enumerate(way4, 1):
 		num = 1
 		sents = []
 		f = open(os.path.join(load_path, f'generated_texts{idx}.txt'), 'w', encoding="utf-8")

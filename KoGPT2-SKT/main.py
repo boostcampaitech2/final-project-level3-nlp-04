@@ -131,12 +131,24 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 	# vocab = vocab_b_obj
 
 	# tok = SentencepieceTokenizer(tok_path)
+	import torch
+	from transformers import AutoTokenizer, AutoModelForCausalLM
+	tok = AutoTokenizer.from_pretrained(
+		'kakaobrain/kogpt', revision='KoGPT6B-ryan1.5b-float16',  # or float32 version: revision=KoGPT6B-ryan1.5b
+		bos_token='<s>', eos_token='</s>', unk_token='<unk>', pad_token='<pad>', mask_token=None, sep_token='<sep>'
+	)
+	model = AutoModelForCausalLM.from_pretrained(
+		'kakaobrain/kogpt', revision='KoGPT6B-ryan1.5b-float16',  # or float32 version: revision=KoGPT6B-ryan1.5b
+		pad_token_id=tok.eos_token_id,
+		torch_dtype='auto', low_cpu_mem_usage=True
+	).to(device='cuda', non_blocking=True)
 
-	from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
-	model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2')
-	tok = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
-												  bos_token='<s>', eos_token='</s>', unk_token='<unk>',
-												  pad_token='<pad>', mask_token='<mask>', sep_token='<sep>')
+
+	# from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
+	# model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2').to(ctx)
+	# tok = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
+	# 											  bos_token='<s>', eos_token='</s>', unk_token='<unk>',
+	# 											  pad_token='<pad>', mask_token='<mask>', sep_token='<sep>')
 	vocab = tok.get_vocab()
 	vocab = gluonnlp.vocab.BERTVocab(vocab,
 									 mask_token=None,
@@ -147,7 +159,6 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
 									 bos_token='<s>',
 									 eos_token='</s>')
 
-	model.to(ctx)
 	model.train()
 	count = 0
 
