@@ -339,7 +339,7 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num', default=3, type=int, help='자신이 맡은 번호를 입력해주세요.')
+    parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
