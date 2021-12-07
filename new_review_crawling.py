@@ -118,32 +118,12 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
 def review_crawling(driver, target_station, target_address, target_category):
     count = 0
     loop = True
-    review_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
+    review_button = driver.find_element(By.CSS_SELECTOR,
+                                        '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
     driver.execute_script("arguments[0].click();", review_button)
     time.sleep(5)
-    total_review_num = int(driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span').text)
-    # 리뷰 '더 보기' 클릭 ('더 보기'가 없거나 20번 누르면 스탑)
-
-    while loop and count < 20:
-        try:
-            current_page_num = len(
-                BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all('li')) - 2
-
-            if current_page_num == total_review_num:
-                break
-
-            element = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a'))
-            )
-            more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
-            driver.execute_script("arguments[0].click();", more_button)
-            WebDriverWait(driver, 1.5).until(
-                EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#review > li:nth-child('+ str(current_page_num + 5) +')'))
-            )
-            count += 1
-        except TimeoutException:
-            loop = False
-
+    total_review_num = int(driver.find_element(By.CSS_SELECTOR,
+                                               '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span').text)
     # 페이지 소스 출력
     html = driver.page_source
     html_source = BeautifulSoup(html, 'html.parser')
@@ -152,10 +132,60 @@ def review_crawling(driver, target_station, target_address, target_category):
     brand = html_source.find("span", attrs={"class": "restaurant-name ng-binding",
                                             "ng-bind": "restaurant.name"}).text.strip()
 
-    # 최소주문금액
-    min_cost = driver.find_element(By.CSS_SELECTOR, "#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-content > ul > li:nth-child(3) > span").text
+    sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
+    brands = sql_helper.get_df(query="SELECT DISTINCT restaurant_name FROM review").values.tolist()
 
-    # 여기서 얻은 html소스로 리뷰, 메뉴, 별점
+    if brand in brands:
+        while loop:
+            restaurant_review = html_source.find_all("li", attrs={"class": "list-group-item star-point ng-scope",
+                                                                  "ng-repeat": "review in restaurant.reviews"})
+
+            review_len = len(restaurant_review)
+            if review_len <= 0:
+                break
+
+            last_review = restaurant_review[review_len - 1]
+            time_info = last_review.find("span", attrs={"class": "review-time ng-binding",
+                                                        "ng-bind": "review.time|since"}).text.strip()
+
+            review_date = covert_to_date(time_info)
+            yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+
+            if yesterday >= review_date:
+                break
+            # 마지막 리뷰가 24시간 안에 작성한 글이면 더보기 버튼 클릭
+            else:
+                more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
+                driver.execute_script("arguments[0].click();", more_button)
+
+    else:
+        while loop and count < 20:
+            try:
+                current_page_num = len(
+                    BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all(
+                        'li')) - 2
+
+                if current_page_num == total_review_num:
+                    break
+
+                element = WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a'))
+                )
+                more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
+                driver.execute_script("arguments[0].click();", more_button)
+                WebDriverWait(driver, 1.5).until(
+                    EC.visibility_of_all_elements_located(
+                        (By.CSS_SELECTOR, '#review > li:nth-child(' + str(current_page_num + 5) + ')'))
+                )
+                count += 1
+            except TimeoutException:
+                loop = False
+
+    # 최소주문금액
+    min_cost = driver.find_element(By.CSS_SELECTOR,
+                                   "#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-content > ul > li:nth-child(3) > span").text
+
+    # 여기서 얻은 html 소스로 리뷰, 메뉴, 별점
     restaurant_review = html_source.find_all("li", attrs={"class": "list-group-item star-point ng-scope",
                                                           "ng-repeat": "review in restaurant.reviews"})
 
@@ -177,33 +207,12 @@ def review_crawling(driver, target_station, target_address, target_category):
             quantity_star = i.find("span", attrs={"class": "points ng-binding",
                                                   "ng-show": "review.rating_quantity > 0"}).text.strip()
 
-            delivery_star = '-1' if i.find("span", attrs={"class": "points ng-binding", "ng-show": "review.rating_delivery > 0"}) == None else i.find("span", attrs={"class": "points ng-binding",
+            delivery_star = '-1' if i.find("span", attrs={"class": "points ng-binding",
+                                                          "ng-show": "review.rating_delivery > 0"}) == None else i.find(
+                "span", attrs={"class": "points ng-binding",
                                "ng-show": "review.rating_delivery > 0"}).text.strip()
 
-            cur_time = time.time()
-            if "시간" in time_info:
-                hour = re.findall('\d+', time_info)
-                written_review = cur_time - float(86400 * int(hour[0]))
-                written_review = time.localtime(written_review)
-            elif "일주일 전" in time_info:
-                written_review = cur_time - float(86400 * 7)
-                written_review = time.localtime(written_review)
-            elif "일 전" in time_info:
-                day = re.findall('\d+', time_info)
-                written_review = cur_time - float(86400 * int(day[0]))
-                written_review = time.localtime(written_review)
-            elif "어제" == time_info:
-                written_review = cur_time - 86400
-                written_review = time.localtime(written_review)
-            elif '분 전' in time_info or '초 전' in time_info:
-                written_review = cur_time
-                written_review = written_review.split()
-            else:
-                written_review = time_info
-                written_review = re.sub(r'년|월|일', '', written_review)
-                written_review = written_review.split()
-
-            written_review = f"{written_review[0]}-{written_review[1]}-{written_review[2]}"
+            written_review = covert_to_date(time_info)
 
             try:
                 image = i.select('#review > li:nth-child(' + str(review_index + 2) + ') > table')
@@ -233,13 +242,41 @@ def review_crawling(driver, target_station, target_address, target_category):
             print(f"image_str: {image_str}")
             print("\n")
 
-
-            main_list.append([brand, target_station, target_address, user_id, written_review, review, menu,
+            main_list.append([brand, target_station.split()[1], target_address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
-        except :
+        except:
             continue
 
     return driver
+
+
+def covert_to_date(time_info):
+    cur_time = time.time()
+
+    if "시간" in time_info:
+        hour = re.findall('\d+', time_info)
+        written_review = cur_time - float(86400 * int(hour[0]))
+        written_review = time.localtime(written_review)
+    elif "일주일 전" in time_info:
+        written_review = cur_time - float(86400 * 7)
+        written_review = time.localtime(written_review)
+    elif "일 전" in time_info:
+        day = re.findall('\d+', time_info)
+        written_review = cur_time - float(86400 * int(day[0]))
+        written_review = time.localtime(written_review)
+    elif "어제" == time_info:
+        written_review = cur_time - 86400
+        written_review = time.localtime(written_review)
+    elif '분 전' in time_info or '초 전' in time_info:
+        written_review = cur_time
+        written_review = written_review.split()
+    else:
+        written_review = time_info
+        written_review = re.sub(r'년|월|일', '', written_review)
+        written_review = written_review.split()
+
+    written_review = f"{written_review[0]}-{written_review[1]}-{written_review[2]}"
+    return written_review
 
 def click_category(driver, target, search_address_keyword):
     index = category_name.index(target) + 3
