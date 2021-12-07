@@ -115,9 +115,14 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
 
 
 # 리뷰 크롤링하는 함수, 이 부분의 크롤링 할 대상을 수정해야 한다. <- 현재는 재영님이 사용한 코드를 사용하는 중
-def review_crawling(driver, target_station, target_address, target_category):
+def review_crawling(driver, target_station, target_address, target_category, subway):
     count = 0
     loop = True
+    info_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
+    driver.execute_script("arguments[0].click();", info_button)
+
+    address = driver.find_element(By.CSS_SELECTOR, '#info > div:nth-child(2) > p:nth-child(4) > span').text
+
     review_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
     driver.execute_script("arguments[0].click();", review_button)
     time.sleep(5)
@@ -234,7 +239,7 @@ def review_crawling(driver, target_station, target_address, target_category):
             print("\n")
 
 
-            main_list.append([brand, target_station, target_address, user_id, written_review, review, menu,
+            main_list.append([brand, subway, address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
         except :
             continue
@@ -276,7 +281,7 @@ def click_category(driver, target, search_address_keyword):
     return driver
 
 # 식당을 클릭하고 review_crawling 함수를 통해서 해당 식당을 크롤링한다.
-def click_restaurant(driver, target_station, target_address, target_category):
+def click_restaurant(driver, target_station, target_address, target_category, subway):
     # 현재 페이지에서 요기요 등록점 식당에 대해서 정보를 얻어온다. test할때는 한 번에 50개 정도의 식당정보가 나왔습니다.
     restaurant_list = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div').text.split(
         '\n\n\n\n')
@@ -287,8 +292,8 @@ def click_restaurant(driver, target_station, target_address, target_category):
     prev_url = driver.current_url
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
-    # for i in range(1, number_of_restaurant+1):
-    for i in range(1, int((number_of_restaurant + 1) / 4)):
+    for i in range(1, 3):
+    # for i in range(1, int((number_of_restaurant + 1) / 4)):
         target_restaurant_name = restaurant_list[i - 1].split()[0]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
@@ -305,7 +310,7 @@ def click_restaurant(driver, target_station, target_address, target_category):
                 EC.visibility_of_all_elements_located(
                     (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
             )
-            driver = review_crawling(driver, target_station, target_address, target_category)
+            driver = review_crawling(driver, target_station, target_address, target_category, subway)
             driver.get(prev_url)
             start = time.time()
             WebDriverWait(driver, 20).until(
@@ -322,7 +327,7 @@ def click_restaurant(driver, target_station, target_address, target_category):
     return driver
 
 
-def address_page(driver, target_station, target_address, sort_dist_flag, skip_flag):
+def address_page(driver, target_station, target_address, sort_dist_flag, skip_flag, subway):
     # cancel_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn-search-location-cancel.btn-search-location.btn.btn-default > span')
 
     driver, sort_dist_flag, skip_flag, search_address_keyword = search_address(driver, target_station, target_address, sort_dist_flag)
@@ -330,7 +335,7 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
     if not skip_flag:
         for target_category in category_name:
             driver = click_category(driver, target_category, search_address_keyword)
-            driver = click_restaurant(driver, target_station, search_address_keyword, target_category)
+            driver = click_restaurant(driver, target_station, search_address_keyword, target_category, subway)
             # driver.execute_script("arguments[0].click();", cancel_button)
 
     return driver, sort_dist_flag, skip_flag
@@ -352,7 +357,7 @@ if __name__ == '__main__':
     main_list = []
     category_dict = dict()
     url = 'https://www.yogiyo.co.kr/mobile/#/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C/135081/'
-    category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
+    category_name = ['1인분 주문']#, '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
     driver.get(url)
     response = requests.get(url)
     start_time = time.time()
@@ -383,7 +388,8 @@ if __name__ == '__main__':
         # 지하철 역을 주소로 주면서 search address 반보고하기
         for station, address in zip(target_statation[start_point:end_point], target_station_address[start_point:end_point]):
         # for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
-            driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag)
+            subway = subway_number2 + ' ' + station + '역'
+            driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag, subway)
             skip_flag = False
 
             df_main = pd.DataFrame(main_list)
@@ -394,7 +400,8 @@ if __name__ == '__main__':
                                     4: 'review_create_time', 5: 'review_context', 6: 'menu',
                                     7: 'total_star', 8: 'taste_star', 9: 'quantity_star',
                                     10: 'delivery_star', 11: 'image_url', 12: 'min_cost'}, inplace=True)
-            df_total = pd.merge(df_main, df_category, how='left', on='restaurant_name').drop_duplicates()
+            df_total = pd.merge(df_main, df_category, how='left', on='restaurant_name')
+            df_total = df_total.drop_duplicates(subset=['restaurant_name', 'user_id', 'menu', 'review_create_time'])
 
             current_time = datetime.now()
 
