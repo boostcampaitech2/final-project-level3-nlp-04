@@ -49,6 +49,11 @@ def search_address(target_station, target_input_address, sort_dist_flag):
             # driver.find_element(By.CSS_SELECTOR, '#search > div > form > input').click()
             search_text.send_keys(search_keyword)
             driver.execute_script("arguments[0].click();", search_button)
+            # WebDriverWait(driver, 2).until(
+            #     EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#search > div > form > ul > li:nth-child(1) > a' ))
+            #     or
+            #     EC.url_changes(prev_url)
+            # )
             # search_text.send_keys(Keys.ENTER)
             time.sleep(2)
 
@@ -131,7 +136,7 @@ def review_crawling(target_station, target_address, target_category):
     total_review_num = int(driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span').text)
     # 리뷰 '더 보기' 클릭 ('더 보기'가 없거나 20번 누르면 스탑)
 
-    while loop and count < 10:
+    while loop and count < 20:
         try:
             current_page_num = len(
                 BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all('li')) - 2
@@ -144,8 +149,13 @@ def review_crawling(target_station, target_address, target_category):
             )
             more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
             driver.execute_script("arguments[0].click();", more_button)
+            WebDriverWait(driver, 1.5).until(
+                EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#review > li:nth-child('+ str(current_page_num + 5) +')'))
+            )
+            # more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
+            # driver.execute_script("arguments[0].click();", more_button)
             count += 1
-            time.sleep(1.5)
+            # time.sleep(1.5)
         except TimeoutException:
             loop = False
 
@@ -276,11 +286,20 @@ def click_restaurant(target_station, target_address, target_category):
         category_dict[target_restaurant_name] = [target_category]
         target_restaurant = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div:nth-child(' + str(i) + ') > div')
         target_restaurant.click()
-        time.sleep(2)
+        WebDriverWait(driver, 2).until(
+            EC.visibility_of_all_elements_located(
+                (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
+        )
         review_crawling(target_station, target_address, target_category)
-        time.sleep(3)
         driver.get(prev_url)
-        time.sleep(3)
+        start = time.time()
+        WebDriverWait(driver, 3).until(
+            EC.visibility_of_all_elements_located(
+                (By.CSS_SELECTOR,
+                 '#content > div > div:nth-child(5) > div'))
+        )
+        end = time.time()
+        print(end-start)
 
 
 def address_page(target_station, target_address, sort_dist_flag, skip_flag):
@@ -324,8 +343,8 @@ if response.status_code == 200:
     target_statation = subway_data['station_name'].to_list()
     target_station_address = subway_data['address'].to_list()
     # 지하철 역을 주소로 주면서 search address 반보고하기
-    for station, address in zip(target_statation, target_station_address):
-    # for station, address in zip(['신도림'], ['신도림동 460-26']):
+    # for station, address in zip(target_statation, target_station_address):
+    for station, address in zip(['강남'], ['역삼동 858']):
         sort_dist_flag, skip_flag = address_page(station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag)
         skip_flag = False
 
