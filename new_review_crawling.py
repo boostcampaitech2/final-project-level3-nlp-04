@@ -248,15 +248,17 @@ def click_category(driver, target, search_address_keyword):
     current_url = driver.current_url
     driver.quit()
     os.system('pkill chrome')
-    driver= get_option_chrome()
+    driver = get_option_chrome()
     # driver = webdriver.Chrome('../pythonProject1/chromedriver')
     driver.get(current_url)
-
-    search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
-    search_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn.btn-default.ico-pick')
-    search_text.send_keys(search_address_keyword)
-    driver.execute_script("arguments[0].click();", search_button)
     try:
+        WebDriverWait(driver, 10).until(
+            EC.visibility_of_all_elements_located(By.CSS_SELECTOR, '#search > div > form > input'))
+        search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
+        search_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn.btn-default.ico-pick')
+        search_text.send_keys(search_address_keyword)
+        driver.execute_script("arguments[0].click();", search_button)
+
         WebDriverWait(driver, 5).until(
             EC.visibility_of_all_elements_located(
                 (By.CSS_SELECTOR,
