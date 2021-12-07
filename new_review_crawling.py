@@ -369,7 +369,7 @@ if __name__ == '__main__':
         target_statation = subway_data['station_name'].to_list()
         target_station_address = subway_data['address'].to_list()
 
-        start_point = (1-args.num) * 7
+        start_point = (args.num-1) * 7
         end_point = 7 * args.num
         if args.num == 7:
             end_point = len(target_statation)
