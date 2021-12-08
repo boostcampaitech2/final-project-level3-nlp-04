@@ -421,6 +421,7 @@ if __name__ == '__main__':
                     duplicated_cnt += 1
 
             print(f'{station}역 {address} 배달업체 DB insert 완료!')
+            print(f'review 개수 : {len(df_total)}, 중복제거하고 DB에 쌓인 개수 : {len(df_total) - duplicated_cnt}')
 
             # main_list 초기화
             end_work_time = time.time()
