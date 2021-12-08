@@ -12,7 +12,7 @@ def preprocess(text):
 
 
 def main():
-    sql_helper = SqlHelper(c.HOST, c.PORT, c.DB_NAME, c.USER, c.PASSWD)
+    sql_helper = SqlHelper(**c.DB_CONFIG)
 
     query = "select * from preprocessed_review order by insert_time desc limit 1"
 

@@ -419,7 +419,7 @@ if __name__ == '__main__':
             current_time = datetime.now()
 
             # DB 저장 파트 config.py 에서 DB 정보 불러옴
-            sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
+            sql_helper = SqlHelper(**c.DB_CONFIG)
 
             end_crawling_time = time.time()
 
