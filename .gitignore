@@ -6,6 +6,8 @@ samples/
 .idea/
 .ipynb_checkpoints/
 config.py
+Log/
+.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
