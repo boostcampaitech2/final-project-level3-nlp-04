@@ -29,7 +29,7 @@ def main():
     if review_df is not None:
         review_df['preprocessed_review_context'] = review_df.review_context.apply(lambda x: preprocess(x))
 
-        sql_helper.insert(review_df, table_name='preprocessed_review')  # TODO 크롤러 완성되면 table name 수정할 것
+        sql_helper.insert(review_df, table_name='preprocessed_review')
 
         LogHelper().i('DB 저장 완료!')
 
