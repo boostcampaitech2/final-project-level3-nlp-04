@@ -438,6 +438,15 @@ if __name__ == '__main__':
             print('*' * 20)
             print(f'total work time : {end_work_time-start_time} 초')
 
+            if os.path.exists('./reivew_crawling.log'):
+                f = open('./review_crawling', 'a')
+            else:
+                f = open('./review_crawling', 'w')
+
+            f.write(f'{station}역 {address} 배달업체 DB insert 시작!\n')
+            f.write(f'{station}역 {address} 배달업체 DB insert 완료!\n')
+            f.write(f'total crawling time : {(end_crawling_time-start_time)/60} 분\n')
+            f.write(f'total work time : {(end_work_time-start_time)} 분\n\n\n')
             main_list = []
 
 
