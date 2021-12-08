@@ -253,8 +253,8 @@ def click_category(driver, target, search_address_keyword):
     current_url = driver.current_url
     driver.quit()
     os.system('pkill chrome')
-    driver= get_option_chrome()
-    # driver = webdriver.Chrome('.\chromedriver.exe')
+    # driver= get_option_chrome()
+    driver = webdriver.Chrome('../pythonProject1/chromedriver')
     driver.get(current_url)
 
     search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
@@ -270,7 +270,9 @@ def click_category(driver, target, search_address_keyword):
     except:
         driver.refresh()
         driver.find_element(By.CSS_SELECTOR, '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
-    category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
+    # category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
+    category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(7) + ')')
+
     driver.execute_script("arguments[0].click();", category_button)
     WebDriverWait(driver, 5).until(
         EC.visibility_of_all_elements_located(
@@ -292,9 +294,9 @@ def click_restaurant(driver, target_station, target_address, target_category, su
     prev_url = driver.current_url
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
-    # for i in range(1, 3):
-    for i in range(1, int((number_of_restaurant + 1) / 4)):
-        target_restaurant_name = restaurant_list[i]
+    for i in range(1, 3):
+    # for i in range(1, int((number_of_restaurant + 1) / 4)):
+        target_restaurant_name = restaurant_list[i-1]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
             if target_category not in category_value:
@@ -348,16 +350,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
-    driver = get_option_chrome()
+    # driver = get_option_chrome()
 
-    # driver = webdriver.Chrome('.\chromedriver.exe')
+    driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
     main_list = []
     category_dict = dict()
     url = 'https://www.yogiyo.co.kr/mobile/#/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C/135081/'
-    category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
+    category_name = ['중국집']
+    # category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
     driver.get(url)
     response = requests.get(url)
     start_time = time.time()
