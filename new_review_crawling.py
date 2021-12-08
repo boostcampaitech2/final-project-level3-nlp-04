@@ -120,6 +120,7 @@ def review_crawling(driver, target_station, target_address, target_category, sub
     loop = True
     info_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
     driver.execute_script("arguments[0].click();", info_button)
+    time.sleep(5)
 
     address = driver.find_element(By.CSS_SELECTOR, '#info > div:nth-child(2) > p:nth-child(4) > span').text
 
@@ -222,21 +223,21 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
             image_str = ' '.join(image_list)
 
-            print(f'sumway_number : {target_station}')
-            print(f'address : {target_address}')
-            print(f"category: {target_category}")
-            print(f"restaurant_name: {brand}")
-            print(f"min_cost: {min_cost}")
-            print(f"user_id: {user_id}")
-            print(f"review_create_time: {written_review}")
-            print(f"review_context: {review}")
-            print(f"menu: {menu}")
-            print(f"total_star: {star}")
-            print(f"taste_star: {taste_star}")
-            print(f"quantity_star: {quantity_star}")
-            print(f"delivery_star: {delivery_star}")
-            print(f"image_str: {image_str}")
-            print("\n")
+            # print(f'sumway_number : {target_station}')
+            # print(f'address : {target_address}')
+            # print(f"category: {target_category}")
+            # print(f"restaurant_name: {brand}")
+            # print(f"min_cost: {min_cost}")
+            # print(f"user_id: {user_id}")
+            # print(f"review_create_time: {written_review}")
+            # print(f"review_context: {review}")
+            # print(f"menu: {menu}")
+            # print(f"total_star: {star}")
+            # print(f"taste_star: {taste_star}")
+            # print(f"quantity_star: {quantity_star}")
+            # print(f"delivery_star: {delivery_star}")
+            # print(f"image_str: {image_str}")
+            # print("\n")
 
 
             main_list.append([brand, subway, address, user_id, written_review, review, menu,
@@ -293,7 +294,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
     # for i in range(1, 3):
-    for i in range(1, int((number_of_restaurant + 1) / 4)):
+    for i in tqdm(range(1, int((number_of_restaurant + 1) / 4))):
         target_restaurant_name = restaurant_list[i-1]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
