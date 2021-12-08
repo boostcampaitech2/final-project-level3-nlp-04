@@ -8,6 +8,7 @@ samples/
 config.py
 Log/
 .log
+*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

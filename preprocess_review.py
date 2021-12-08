@@ -5,7 +5,7 @@ from core.sql_helper import SqlHelper
 
 
 def preprocess(text):
-    text = re.sub('[^0-9ㄱ-ㅎㅏ-ㅣ가-힣^~!?., ]', "", text)  # 지정된 문자 말고 제외
+    text = re.sub('[^0-9ㄱ-ㅎㅏ-ㅣ가-힣^~!?., ]', " ", text)  # 지정된 문자 말고 제외
     text = re.sub('\s', " ", text)  # 화이트스페이스 띄어쓰기로 변경
     text = re.sub(r'([ㄱ-ㅎㅏ-ㅣ가-힣^~?!.,])\1{2,}', r'\1\1', text)  # 반복되는 문자 2개로 축소
     return text
@@ -22,7 +22,7 @@ def main():
         query = "select * from review"
     else:
         insert_time = preprocessed_review_df.iloc[0].insert_time
-        query = f"select * from review where insert_time > {insert_time}"
+        query = f"select * from review where insert_time > '{insert_time}'"
 
     review_df = sql_helper.get_df(query)
 
