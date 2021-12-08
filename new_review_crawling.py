@@ -224,21 +224,21 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
             image_str = ' '.join(image_list)
 
-            LogHelper().i(f'sumway_number : {target_station}')
-            LogHelper().i(f'address : {target_address}')
-            LogHelper().i(f"category: {target_category}")
-            LogHelper().i(f"restaurant_name: {brand}")
-            LogHelper().i(f"min_cost: {min_cost}")
-            LogHelper().i(f"user_id: {user_id}")
-            LogHelper().i(f"review_create_time: {written_review}")
-            LogHelper().i(f"review_context: {review}")
-            LogHelper().i(f"menu: {menu}")
-            LogHelper().i(f"total_star: {star}")
-            LogHelper().i(f"taste_star: {taste_star}")
-            LogHelper().i(f"quantity_star: {quantity_star}")
-            LogHelper().i(f"delivery_star: {delivery_star}")
-            LogHelper().i(f"image_str: {image_str}")
-            LogHelper().i("\n")
+            # LogHelper().i(f'sumway_number : {target_station}')
+            # LogHelper().i(f'address : {target_address}')
+            # LogHelper().i(f"category: {target_category}")
+            # LogHelper().i(f"restaurant_name: {brand}")
+            # LogHelper().i(f"min_cost: {min_cost}")
+            # LogHelper().i(f"user_id: {user_id}")
+            # LogHelper().i(f"review_create_time: {written_review}")
+            # LogHelper().i(f"review_context: {review}")
+            # LogHelper().i(f"menu: {menu}")
+            # LogHelper().i(f"total_star: {star}")
+            # LogHelper().i(f"taste_star: {taste_star}")
+            # LogHelper().i(f"quantity_star: {quantity_star}")
+            # LogHelper().i(f"delivery_star: {delivery_star}")
+            # LogHelper().i(f"image_str: {image_str}")
+            # LogHelper().i("\n")
 
             main_list.append([brand, subway, address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
@@ -253,11 +253,18 @@ def click_category(driver, target, search_address_keyword):
 
     current_url = driver.current_url
     driver.quit()
+
     # os.system('pkill chrome')
     driver= get_option_chrome()
-    # driver = webdriver.Chrome('.\chromedriver.exe')
+    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
+
     driver.get(current_url)
 
+    WebDriverWait(driver, 5).until(
+        EC.visibility_of_all_elements_located(
+            (By.CSS_SELECTOR,
+             '#search > div > form > input'))
+    )
     search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
     search_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn.btn-default.ico-pick')
     search_text.send_keys(search_address_keyword)
@@ -271,7 +278,9 @@ def click_category(driver, target, search_address_keyword):
     except:
         driver.refresh()
         driver.find_element(By.CSS_SELECTOR, '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
+    # category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
     category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
+
     driver.execute_script("arguments[0].click();", category_button)
     WebDriverWait(driver, 5).until(
         EC.visibility_of_all_elements_located(
@@ -293,6 +302,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
     prev_url = driver.current_url
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
+
     # for i in range(1, 3):
     for i in tqdm(range(1, int((number_of_restaurant + 1) / 4)), desc=f'{target_category}'):
         target_restaurant_name = restaurant_list[i-1]
@@ -321,6 +331,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
             )
             # end = time.time()
             # print(end-start)
+
         except:
             driver.get(prev_url)
             time.sleep(5)
@@ -351,13 +362,14 @@ if __name__ == '__main__':
     # 서버에서 실행 시 수행
     driver = get_option_chrome()
 
-    # driver = webdriver.Chrome('.\chromedriver.exe')
+    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
     main_list = []
     category_dict = dict()
     url = 'https://www.yogiyo.co.kr/mobile/#/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C/135081/'
+    # category_name = ['중국집']
     category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
     driver.get(url)
     response = requests.get(url)
@@ -430,6 +442,16 @@ if __name__ == '__main__':
             LogHelper().i('*' * 20)
             LogHelper().i(f'total work time : {end_work_time-start_time} 초')
 
+            if os.path.exists('./reivew_crawling.log'):
+                f = open('./review_crawling', 'a')
+            else:
+                f = open('./review_crawling', 'w')
+
+            f.write(f'{station}역 {address} 배달업체 DB insert 시작!\n')
+            f.write(f'{station}역 {address} 배달업체 DB insert 완료!\n')
+            f.write(f'total crawling time : {(end_crawling_time-start_time)/60} 분\n')
+            f.write(f'total work time : {(end_work_time-start_time)} 분\n\n\n')
+            f.close()
             main_list = []
 
 

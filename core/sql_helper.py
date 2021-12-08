@@ -2,6 +2,7 @@ import pymysql
 from sqlalchemy import *
 import pandas as pd
 from collections import OrderedDict
+from core.log_helper import LogHelper
 
 pymysql.install_as_MySQLdb()
 
@@ -25,7 +26,7 @@ class SqlHelper:
             df.to_sql(name=table_name, con=engine, if_exists='append', index=False)
 
         except Exception as e:
-            print(e)
+            LogHelper().i(e)
         finally:
             if conn is not None:
                 # disconnect from server
@@ -47,7 +48,7 @@ class SqlHelper:
             result = [table['Tables_in_review'] for table in cursor.fetchall()]
 
         except Exception as e:
-            print(e)
+            LogHelper().i(e)
         finally:
             if conn is not None:
                 # disconnect from server
@@ -74,7 +75,7 @@ class SqlHelper:
             data_frame.columns = map(str.lower, data_frame.columns)
 
         except Exception as e:
-            print(e)
+            LogHelper().i(e)
         finally:
             if conn is not None:
                 # disconnect from server

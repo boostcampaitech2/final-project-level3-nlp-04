@@ -1,6 +1,6 @@
 import re
 import config as c
-
+from core.log_helper import LogHelper
 from core.sql_helper import SqlHelper
 
 
@@ -31,7 +31,7 @@ def main():
 
         sql_helper.insert(review_df, table_name='test_preprocessed_review')  # TODO 크롤러 완성되면 table name 수정할 것
 
-        print('DB 저장 완료!')
+        LogHelper().i('DB 저장 완료!')
 
 
 if __name__ == '__main__':
