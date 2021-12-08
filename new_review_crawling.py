@@ -252,9 +252,11 @@ def click_category(driver, target, search_address_keyword):
 
     current_url = driver.current_url
     driver.quit()
-    os.system('pkill chrome')
-    # driver= get_option_chrome()
-    driver = webdriver.Chrome('../pythonProject1/chromedriver')
+
+    # os.system('pkill chrome')
+    driver= get_option_chrome()
+    # driver = webdriver.Chrome('.\chromedriver.exe')
+
     driver.get(current_url)
 
     search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
@@ -294,8 +296,10 @@ def click_restaurant(driver, target_station, target_address, target_category, su
     prev_url = driver.current_url
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
-    for i in range(1, 3):
-    # for i in range(1, int((number_of_restaurant + 1) / 4)):
+
+    # for i in range(1, 3):
+    for i in range(1, int((number_of_restaurant + 1) / 4)):
+
         target_restaurant_name = restaurant_list[i-1]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
