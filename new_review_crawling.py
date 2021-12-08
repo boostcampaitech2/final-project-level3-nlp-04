@@ -410,7 +410,15 @@ if __name__ == '__main__':
 
             end_crawling_time = time.time()
 
-            sql_helper.insert(df_total)
+            print(f'{station}역 {address} 배달업체 DB insert 시작!')
+            duplicated_cnt = 0
+            for _, row in df_total.iterrows():
+                try:
+                    row_df = pd.DataFrame(row).T
+                    sql_helper.insert(row_df)
+                except Exception as e:
+                    print(e)
+                    duplicated_cnt += 1
 
             print(f'{station}역 {address} 배달업체 DB insert 완료!')
 
