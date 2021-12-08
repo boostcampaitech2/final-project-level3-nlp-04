@@ -354,17 +354,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
-    # driver = get_option_chrome()
+    driver = get_option_chrome()
 
-    driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
     main_list = []
     category_dict = dict()
     url = 'https://www.yogiyo.co.kr/mobile/#/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C/135081/'
-    category_name = ['중국집']
-    # category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
+    # category_name = ['중국집']
+    category_name = ['1인분 주문', '프랜차이즈', '치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']
     driver.get(url)
     response = requests.get(url)
     start_time = time.time()
