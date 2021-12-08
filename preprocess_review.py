@@ -1,7 +1,7 @@
 import re
 import config as c
 
-from db.sql_helper import SqlHelper
+from core.sql_helper import SqlHelper
 
 
 def preprocess(text):

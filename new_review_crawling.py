@@ -1,5 +1,5 @@
 # from _typeshed import WriteableBuffer
-from db.sql_helper import SqlHelper
+from core.sql_helper import SqlHelper
 from subway_data import *
 from address_crawling import *
 from datetime import datetime
@@ -294,7 +294,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
 
     # 위에서 얻어온 식당 정보를 바탕으로 첫번째 식당부터 하나씩 클릭해서 페이지에 접근하기 + 접근한 식당 페이지에서 크롤링하기
     # for i in range(1, 3):
-    for i in tqdm(range(1, int((number_of_restaurant + 1) / 4))):
+    for i in tqdm(range(1, int((number_of_restaurant + 1) / 4)), desc=f'{target_category}'):
         target_restaurant_name = restaurant_list[i-1]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
@@ -313,14 +313,14 @@ def click_restaurant(driver, target_station, target_address, target_category, su
             )
             driver = review_crawling(driver, target_station, target_address, target_category, subway)
             driver.get(prev_url)
-            start = time.time()
+            # start = time.time()
             WebDriverWait(driver, 20).until(
                 EC.visibility_of_all_elements_located(
                     (By.CSS_SELECTOR,
                     '#content > div > div:nth-child(5) > div'))
             )
-            end = time.time()
-            print(end-start)
+            # end = time.time()
+            # print(end-start)
         except:
             driver.get(prev_url)
             time.sleep(5)
