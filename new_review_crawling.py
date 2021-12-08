@@ -324,14 +324,12 @@ def click_restaurant(driver, target_station, target_address, target_category, su
             )
             driver = review_crawling(driver, target_station, target_address, target_category, subway)
             driver.get(prev_url)
-            start = time.time()
             WebDriverWait(driver, 20).until(
                 EC.visibility_of_all_elements_located(
                     (By.CSS_SELECTOR,
                     '#content > div > div:nth-child(5) > div'))
             )
-            end = time.time()
-            print(end-start)
+
         except:
             driver.get(prev_url)
             time.sleep(5)
