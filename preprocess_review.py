@@ -14,22 +14,22 @@ def preprocess(text):
 def main():
     sql_helper = SqlHelper(c.HOST, c.PORT, c.DB_NAME, c.USER, c.PASSWD)
 
-    query = "select * from test_preprocessed_review order by insert_time desc limit 1"
+    query = "select * from preprocessed_review order by insert_time desc limit 1"
 
     preprocessed_review_df = sql_helper.get_df(query)
 
     if preprocessed_review_df.empty:
-        query = "select * from test_review"
+        query = "select * from review"
     else:
         insert_time = preprocessed_review_df.iloc[0].insert_time
-        query = f"select * from test_review where insert_time > {insert_time}"
+        query = f"select * from review where insert_time > {insert_time}"
 
     review_df = sql_helper.get_df(query)
 
     if review_df is not None:
         review_df['preprocessed_review_context'] = review_df.review_context.apply(lambda x: preprocess(x))
 
-        sql_helper.insert(review_df, table_name='test_preprocessed_review')  # TODO 크롤러 완성되면 table name 수정할 것
+        sql_helper.insert(review_df, table_name='preprocessed_review')  # TODO 크롤러 완성되면 table name 수정할 것
 
         LogHelper().i('DB 저장 완료!')
 
