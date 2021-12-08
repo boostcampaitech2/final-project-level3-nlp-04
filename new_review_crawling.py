@@ -344,7 +344,7 @@ def address_page(driver, target_station, target_address, sort_dist_flag, skip_fl
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num', default=3, type=int, help='자신이 맡은 번호를 입력해주세요.')
+    parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
@@ -410,7 +410,15 @@ if __name__ == '__main__':
 
             end_crawling_time = time.time()
 
-            sql_helper.insert(df_total)
+            print(f'{station}역 {address} 배달업체 DB insert 시작!')
+            duplicated_cnt = 0
+            for _, row in df_total.iterrows():
+                try:
+                    row_df = pd.DataFrame(row).T
+                    sql_helper.insert(row_df)
+                except Exception as e:
+                    print(e)
+                    duplicated_cnt += 1
 
             print(f'{station}역 {address} 배달업체 DB insert 완료!')
 
