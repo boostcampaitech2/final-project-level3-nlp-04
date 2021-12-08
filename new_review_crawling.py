@@ -1,5 +1,6 @@
 # from _typeshed import WriteableBuffer
 from core.sql_helper import SqlHelper
+from core.log_helper import LogHelper
 from subway_data import *
 from address_crawling import *
 from datetime import datetime
@@ -223,22 +224,21 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
             image_str = ' '.join(image_list)
 
-            # print(f'sumway_number : {target_station}')
-            # print(f'address : {target_address}')
-            # print(f"category: {target_category}")
-            # print(f"restaurant_name: {brand}")
-            # print(f"min_cost: {min_cost}")
-            # print(f"user_id: {user_id}")
-            # print(f"review_create_time: {written_review}")
-            # print(f"review_context: {review}")
-            # print(f"menu: {menu}")
-            # print(f"total_star: {star}")
-            # print(f"taste_star: {taste_star}")
-            # print(f"quantity_star: {quantity_star}")
-            # print(f"delivery_star: {delivery_star}")
-            # print(f"image_str: {image_str}")
-            # print("\n")
-
+            LogHelper().i(f'sumway_number : {target_station}')
+            LogHelper().i(f'address : {target_address}')
+            LogHelper().i(f"category: {target_category}")
+            LogHelper().i(f"restaurant_name: {brand}")
+            LogHelper().i(f"min_cost: {min_cost}")
+            LogHelper().i(f"user_id: {user_id}")
+            LogHelper().i(f"review_create_time: {written_review}")
+            LogHelper().i(f"review_context: {review}")
+            LogHelper().i(f"menu: {menu}")
+            LogHelper().i(f"total_star: {star}")
+            LogHelper().i(f"taste_star: {taste_star}")
+            LogHelper().i(f"quantity_star: {quantity_star}")
+            LogHelper().i(f"delivery_star: {delivery_star}")
+            LogHelper().i(f"image_str: {image_str}")
+            LogHelper().i("\n")
 
             main_list.append([brand, subway, address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
@@ -249,7 +249,7 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
 def click_category(driver, target, search_address_keyword):
     index = category_name.index(target) + 3
-    print(target, index)
+    LogHelper().i(target, index)
 
     current_url = driver.current_url
     driver.quit()
@@ -287,7 +287,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
     restaurant_list = driver.find_elements(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div')
     restaurant_list = [name.text.split()[5] if name.text.split()[0] == '현재' else name.text.split()[0] for name in restaurant_list]
     number_of_restaurant = len(restaurant_list)
-    print(number_of_restaurant)
+    LogHelper().i(number_of_restaurant)
 
     # 뒤로 가기를 하기 위해서 url정보를 저장
     prev_url = driver.current_url
@@ -411,7 +411,7 @@ if __name__ == '__main__':
 
             end_crawling_time = time.time()
 
-            print(f'{station}역 {address} 배달업체 DB insert 시작!')
+            LogHelper().i(f'{station}역 {address} 배달업체 DB insert 시작!')
             for _, row in df_total.iterrows():
                 try:
                     row_df = pd.DataFrame(row).T
@@ -419,16 +419,16 @@ if __name__ == '__main__':
                 except Exception as e:
                     print(e)
 
-            print(f'{station}역 {address} 배달업체 DB insert 완료!')
-            print(f'review 개수 : {len(df_total)}')
+            LogHelper().i(f'{station}역 {address} 배달업체 DB insert 완료!')
+            LogHelper().i(f'review 개수 : {len(df_total)}')
 
             # main_list 초기화
             end_work_time = time.time()
 
-            print('*'*20)
-            print(f'total crawling time : {end_crawling_time-start_time} 초')
-            print('*' * 20)
-            print(f'total work time : {end_work_time-start_time} 초')
+            LogHelper().i('*'*20)
+            LogHelper().i(f'total crawling time : {end_crawling_time-start_time} 초')
+            LogHelper().i('*' * 20)
+            LogHelper().i(f'total work time : {end_work_time-start_time} 초')
 
             main_list = []
 
@@ -438,4 +438,4 @@ if __name__ == '__main__':
         # df_total.to_csv(f'pilot_total_{current_time}.csv', encoding='utf-8')
 
     else:
-        print(response.status_code)
+        LogHelper().i(response.status_code)
