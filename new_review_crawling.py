@@ -121,7 +121,21 @@ def review_crawling(driver, target_station, target_address, target_category, sub
     loop = True
     info_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
     driver.execute_script("arguments[0].click();", info_button)
-    time.sleep(5)
+    # time.sleep(5)
+
+    WebDriverWait(driver, 5).until(
+        EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#info > div:nth-child(2) > p:nth-child(4) > span'))
+    )
+
+    address = driver.find_element(By.CSS_SELECTOR, '#info > div:nth-child(2) > p:nth-child(4) > span').text
+
+    review_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
+    driver.execute_script("arguments[0].click();", review_button)
+
+    WebDriverWait(driver, 5).until(
+        EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span'))
+    )
+
     total_review_num = int(driver.find_element(By.CSS_SELECTOR,
                                                '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span').text)
     # 페이지 소스 출력
@@ -133,9 +147,11 @@ def review_crawling(driver, target_station, target_address, target_category, sub
                                             "ng-bind": "restaurant.name"}).text.strip()
 
     sql_helper = SqlHelper(host=c.HOST, port=c.PORT, db_name=c.DB_NAME, user=c.USER, passwd=c.PASSWD)
-    brands = sql_helper.get_df(query="SELECT DISTINCT restaurant_name FROM review").values.tolist()
+    # brands = sql_helper.get_df(query="SELECT DISTINCT restaurant_name FROM review").values.tolist()
+    brands = sql_helper.get_df(query="SELECT DISTINCT restaurant_name FROM review_backup_20211207").values.tolist()
+    brand_list = [target[0] for target in brands]
 
-    if brand in brands:
+    if brand in brand_list:
         while loop:
             restaurant_review = html_source.find_all("li", attrs={"class": "list-group-item star-point ng-scope",
                                                                   "ng-repeat": "review in restaurant.reviews"})
@@ -149,9 +165,13 @@ def review_crawling(driver, target_station, target_address, target_category, sub
                                                         "ng-bind": "review.time|since"}).text.strip()
 
             review_date = covert_to_date(time_info)
+            # TODO DB에서 query를 날려서 해당 식당에 리뷰 중 가장 최근의 값을 가져오기
             yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
-            if yesterday >= review_date:
+            formatted_yesterday= time.strptime(yesterday, "%Y-%m-%d")
+            formatted_review = time.strptime(review_date, "%Y-%m-%d")
+
+            if formatted_yesterday >= formatted_review:
                 break
             # 마지막 리뷰가 24시간 안에 작성한 글이면 더보기 버튼 클릭
             else:
@@ -284,8 +304,8 @@ def click_category(driver, target, search_address_keyword):
     driver.quit()
 
     # os.system('pkill chrome')
-    driver= get_option_chrome()
-    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver= get_option_chrome()
+    driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     driver.get(current_url)
 
@@ -388,9 +408,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
-    driver = get_option_chrome()
 
-    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver = get_option_chrome()
+
+    driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
