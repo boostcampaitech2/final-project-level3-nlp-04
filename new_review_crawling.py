@@ -3,6 +3,7 @@ from db.sql_helper import SqlHelper
 from subway_data import *
 from address_crawling import *
 from datetime import datetime
+from datetime import timedelta
 import os
 import config as c
 
@@ -383,6 +384,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
+    parser.add_argument('--test',default = False, type=bool, help='테스트여부 설정.' )
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
@@ -454,7 +456,10 @@ if __name__ == '__main__':
             for _, row in df_total.iterrows():
                 try:
                     row_df = pd.DataFrame(row).T
-                    sql_helper.insert(row_df)
+                    if args.test:
+                        sql_helper.insert_backup(row_df)
+                    else:
+                        sql_helper.insert(row_df)
                 except Exception as e:
                     print(e)
                     duplicated_cnt += 1
