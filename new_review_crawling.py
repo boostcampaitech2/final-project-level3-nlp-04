@@ -115,12 +115,11 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
 
 
 # 리뷰 크롤링하는 함수, 이 부분의 크롤링 할 대상을 수정해야 한다. <- 현재는 재영님이 사용한 코드를 사용하는 중
-def review_crawling(driver, target_station, target_address, target_category):
+def review_crawling(driver, target_station, target_address, target_category, subway):
     count = 0
     loop = True
-    review_button = driver.find_element(By.CSS_SELECTOR,
-                                        '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
-    driver.execute_script("arguments[0].click();", review_button)
+    info_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
+    driver.execute_script("arguments[0].click();", info_button)
     time.sleep(5)
     total_review_num = int(driver.find_element(By.CSS_SELECTOR,
                                                '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span').text)
