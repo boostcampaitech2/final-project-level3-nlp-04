@@ -56,6 +56,24 @@ class SqlHelper:
 
         return result
 
+    def insert_backup(self, df, table_name='review_backup_20211207'):
+        conn = None
+
+        try:
+            # Open database connection
+            engine = create_engine(f'mysql://{self.user}:{self.passwd}@{self.host}/{self.db_name}?charset=utf8mb4')
+
+            conn = engine.connect()
+
+            df.to_sql(name=table_name, con=engine, if_exists='append', index=False)
+
+        except Exception as e:
+            print(e)
+        finally:
+            if conn is not None:
+                # disconnect from server
+                conn.close()
+
     def get_df(self, query):
         data_frame = None
         conn = None
