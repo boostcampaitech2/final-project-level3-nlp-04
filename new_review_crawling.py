@@ -299,8 +299,8 @@ def click_category(driver, target, search_address_keyword):
     driver.quit()
 
     # os.system('pkill chrome')
-    # driver= get_option_chrome()
-    driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    driver= get_option_chrome()
+    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     driver.get(current_url)
 
@@ -404,9 +404,9 @@ if __name__ == '__main__':
 
     # 서버에서 실행 시 수행
 
-    # driver = get_option_chrome()
+    driver = get_option_chrome()
 
-    driver = webdriver.Chrome('../pythonProject1/chromedriver')
+    # driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     # 크롤링을 정보를 담기 위한 main_list
     # main_dict = dict()
@@ -420,7 +420,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     restaurant_review_query = '''
-        select `restaurant_name`, `review_create_time`
+        select `restaurant_name`, ``
     from(
         select *
         from review_backup_20211207
