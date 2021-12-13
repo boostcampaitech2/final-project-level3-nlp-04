@@ -474,11 +474,11 @@ if __name__ == '__main__':
         skip_flag = False
 
         # 지하철 역 정보가 있는 subway_data.csv가 없으면 생성
-        if not os.path.exists('../data/pilot_subway_address_info.csv'):
+        if not os.path.exists('data/pilot_subway_address_info.csv'):
             address_crawling()
 
         # 지하철 호선 번호와 해당 호선의 지하철 역 정보를 가져오기
-        subway_data = pd.read_csv('../data/pilot_subway_address_info.csv', encoding='utf-8')
+        subway_data = pd.read_csv('data/pilot_subway_address_info.csv', encoding='utf-8')
         # subway_data.rename(columns={'Unnamed: 0' : 'station_name'},inplace=True)
         subway_list_dict = subway_data.to_dict(orient='row')
         subway_number2 = subway_data['subway_name'][0]
