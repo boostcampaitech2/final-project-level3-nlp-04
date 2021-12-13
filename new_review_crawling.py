@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # from _typeshed import WriteableBuffer
 from core.sql_helper import SqlHelper
 from core.log_helper import LogHelper
@@ -396,7 +399,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
-    parser.add_argument('--test',default = False, type=bool, help='테스트여부 설정.' )
+    parser.add_argument('--test', default = False, type=bool, help='테스트여부 설정.' )
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
@@ -416,7 +419,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     restaurant_review_query = '''
-        select `restaurant_name`, ``
+        select `restaurant_name`, `review_create_time`
     from(
         select *
         from review_backup_20211207
