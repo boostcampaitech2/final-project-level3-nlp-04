@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 def address_crawling():
-    subway_df = pd.read_csv('subway_data.csv', encoding='utf-8')
+    subway_df = pd.read_csv('../data/subway_data.csv', encoding='utf-8')
     subway_df.rename(columns={'Unnamed: 0' : 'subway_name'}, inplace=True)
 
     subway_name_list = subway_df['subway_name'].to_list()
@@ -52,4 +52,4 @@ def address_crawling():
             address_info_list.append([target_subway_name, target_station_info, detail_address])
 
     df = pd.DataFrame(address_info_list, columns=['subway_name', 'station_name', 'address'])
-    df.to_csv('pilot_subway_address_info.csv', encoding='utf-8', index=False)
+    df.to_csv('../data/pilot_subway_address_info.csv', encoding='utf-8', index=False)

@@ -25,6 +25,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import argparse
 
+
 def get_option_chrome():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
@@ -43,7 +44,8 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
     input_station = target_station.strip()  # 역이름+2호선
     search_text = driver.find_element(By.CSS_SELECTOR, '#search > div > form > input')
     search_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn.btn-default.ico-pick')
-    cancel_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn-search-location-cancel.btn-search-location.btn.btn-default > span')
+    cancel_button = driver.find_element(By.CSS_SELECTOR,
+                                        '#button_search_address > button.btn-search-location-cancel.btn-search-location.btn.btn-default > span')
     prev_url = driver.current_url
     search_keyword = input_target
 
@@ -78,7 +80,8 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
             time.sleep(2)
 
         try:
-            if driver.find_element(By.CSS_SELECTOR, '#search > div > form > ul > li:nth-child(1) > a').text == "검색하신 주소를 찾을 수 없습니다.":
+            if driver.find_element(By.CSS_SELECTOR,
+                                   '#search > div > form > ul > li:nth-child(1) > a').text == "검색하신 주소를 찾을 수 없습니다.":
                 if i == 3:
                     return driver, sort_dist_flag, True, None
                 continue
@@ -112,7 +115,8 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
             break
 
     if not sort_dist_flag:
-        driver.find_element(By.CSS_SELECTOR, '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
+        driver.find_element(By.CSS_SELECTOR,
+                            '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
         time.sleep(5)
         sort_dist_flag = not sort_dist_flag
 
@@ -123,7 +127,8 @@ def search_address(driver, target_station, target_input_address, sort_dist_flag)
 def review_crawling(driver, target_station, target_address, target_category, subway, db_review_dict, is_test):
     count = 0
     loop = True
-    info_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
+    info_button = driver.find_element(By.CSS_SELECTOR,
+                                      '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(3) > a')
     driver.execute_script("arguments[0].click();", info_button)
 
     WebDriverWait(driver, 5).until(
@@ -132,11 +137,13 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
     address = driver.find_element(By.CSS_SELECTOR, '#info > div:nth-child(2) > p:nth-child(4) > span').text
 
-    review_button = driver.find_element(By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
+    review_button = driver.find_element(By.CSS_SELECTOR,
+                                        '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li:nth-child(2) > a')
     driver.execute_script("arguments[0].click();", review_button)
 
     WebDriverWait(driver, 5).until(
-        EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span'))
+        EC.visibility_of_all_elements_located((By.CSS_SELECTOR,
+                                               '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > ul > li.active > a > span'))
     )
 
     total_review_num = int(driver.find_element(By.CSS_SELECTOR,
@@ -149,14 +156,15 @@ def review_crawling(driver, target_station, target_address, target_category, sub
     brand = html_source.find("span", attrs={"class": "restaurant-name ng-binding",
                                             "ng-bind": "restaurant.name"}).text.strip()
 
-
     if db_review_dict.get(brand) != None:
-        # TODO DB에서 query를 날려서 해당 식당에 리뷰 중 가장 최근의 값을 가져오기
+        # DB에서 query를 날려서 해당 식당에 리뷰 중 가장 최근의 값을 가져오기
         target_created_date = db_review_dict[brand]
         target_created_datetime = time.strptime(target_created_date, "%Y-%m-%d")
 
         while loop:
-            restaurant_review = BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all('li')
+            restaurant_review = BeautifulSoup(driver.page_source, 'html.parser').find('ul',
+                                                                                      attrs={'id': 'review'}).find_all(
+                'li')
             restaurant_review_len = len(restaurant_review) - 2
             if restaurant_review_len <= 0:
                 break
@@ -174,13 +182,12 @@ def review_crawling(driver, target_station, target_address, target_category, sub
             else:
                 more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
                 driver.execute_script("arguments[0].click();", more_button)
-
-
     else:
         while loop and count < 20:
             try:
                 current_page_num = len(
-                    BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all('li')) - 2
+                    BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all(
+                        'li')) - 2
 
                 if current_page_num == total_review_num:
                     break
@@ -191,19 +198,18 @@ def review_crawling(driver, target_station, target_address, target_category, sub
                 more_button = driver.find_element(By.CSS_SELECTOR, '#review > li.list-group-item.btn-more > a')
                 driver.execute_script("arguments[0].click();", more_button)
                 WebDriverWait(driver, 1.5).until(
-                    EC.visibility_of_all_elements_located((By.CSS_SELECTOR, '#review > li:nth-child('+ str(current_page_num + 5) +')'))
+                    EC.visibility_of_all_elements_located(
+                        (By.CSS_SELECTOR, '#review > li:nth-child(' + str(current_page_num + 5) + ')'))
                 )
                 count += 1
             except TimeoutException:
                 loop = False
 
-
-
-
-
-
-    min_cost = driver.find_element(By.CSS_SELECTOR,"#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-content > ul > li:nth-child(3) > span").text
-    restaurant_review_info = BeautifulSoup(driver.page_source, 'html.parser').find('ul', attrs={'id': 'review'}).find_all('li')
+    min_cost = driver.find_element(By.CSS_SELECTOR,
+                                   "#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-content > ul > li:nth-child(3) > span").text
+    restaurant_review_info = BeautifulSoup(driver.page_source, 'html.parser').find('ul',
+                                                                                   attrs={'id': 'review'}).find_all(
+        'li')
 
     for review_index, i in enumerate(restaurant_review_info[1:-1]):
         try:
@@ -223,7 +229,9 @@ def review_crawling(driver, target_station, target_address, target_category, sub
             quantity_star = i.find("span", attrs={"class": "points ng-binding",
                                                   "ng-show": "review.rating_quantity > 0"}).text.strip()
 
-            delivery_star = '-1' if i.find("span", attrs={"class": "points ng-binding", "ng-show": "review.rating_delivery > 0"}) == None else i.find("span", attrs={"class": "points ng-binding",
+            delivery_star = '-1' if i.find("span", attrs={"class": "points ng-binding",
+                                                          "ng-show": "review.rating_delivery > 0"}) == None else i.find(
+                "span", attrs={"class": "points ng-binding",
                                "ng-show": "review.rating_delivery > 0"}).text.strip()
 
             written_review = covert_to_date(time_info)
@@ -258,7 +266,7 @@ def review_crawling(driver, target_station, target_address, target_category, sub
 
             main_list.append([brand, subway, address, user_id, written_review, review, menu,
                               star, taste_star, quantity_star, delivery_star, image_str, min_cost])
-        except :
+        except:
             continue
 
     return driver
@@ -301,7 +309,7 @@ def click_category(driver, target, search_address_keyword):
     driver.quit()
 
     # os.system('pkill chrome')
-    driver= get_option_chrome()
+    driver = get_option_chrome()
     # driver = webdriver.Chrome('../pythonProject1/chromedriver')
 
     driver.get(current_url)
@@ -323,7 +331,8 @@ def click_category(driver, target, search_address_keyword):
         )
     except:
         driver.refresh()
-        driver.find_element(By.CSS_SELECTOR, '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
+        driver.find_element(By.CSS_SELECTOR,
+                            '#content > div > div.row.restaurant-list-info > div.list-option > div > select > option:nth-child(5)').click()
     # category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
     category_button = driver.find_element(By.CSS_SELECTOR, '#category > ul > li:nth-child(' + str(index) + ')')
 
@@ -336,11 +345,13 @@ def click_category(driver, target, search_address_keyword):
 
     return driver
 
+
 # 식당을 클릭하고 review_crawling 함수를 통해서 해당 식당을 크롤링한다.
 def click_restaurant(driver, target_station, target_address, target_category, subway, db_review_dict, is_test):
     # 현재 페이지에서 요기요 등록점 식당에 대해서 정보를 얻어온다. test할때는 한 번에 50개 정도의 식당정보가 나왔습니다.
     restaurant_list = driver.find_elements(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div')
-    restaurant_list = [name.text.split()[5] if name.text.split()[0] == '현재' else name.text.split()[0] for name in restaurant_list]
+    restaurant_list = [name.text.split()[5] if name.text.split()[0] == '현재' else name.text.split()[0] for name in
+                       restaurant_list]
     number_of_restaurant = len(restaurant_list)
     LogHelper().i(number_of_restaurant)
 
@@ -351,7 +362,7 @@ def click_restaurant(driver, target_station, target_address, target_category, su
 
     # for i in range(1, 3):
     for i in tqdm(range(1, int((number_of_restaurant + 1) / 4)), desc=f'{target_category}'):
-        target_restaurant_name = restaurant_list[i-1]
+        target_restaurant_name = restaurant_list[i - 1]
         if category_dict.get(target_restaurant_name) != None:
             category_value = category_dict[target_restaurant_name]
             if target_category not in category_value:
@@ -359,20 +370,24 @@ def click_restaurant(driver, target_station, target_address, target_category, su
             continue
 
         category_dict[target_restaurant_name] = [target_category]
-        target_restaurant = driver.find_element(By.CSS_SELECTOR, '#content > div > div:nth-child(5) > div > div > div:nth-child(' + str(i) + ') > div')
+        target_restaurant = driver.find_element(By.CSS_SELECTOR,
+                                                '#content > div > div:nth-child(5) > div > div > div:nth-child(' + str(
+                                                    i) + ') > div')
         target_restaurant.click()
-        
+
         try:
             WebDriverWait(driver, 20).until(
                 EC.visibility_of_all_elements_located(
-                    (By.CSS_SELECTOR, '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
+                    (By.CSS_SELECTOR,
+                     '#content > div.restaurant-detail.row.ng-scope > div.col-sm-8 > div.restaurant-info > div.restaurant-title > span'))
             )
-            driver = review_crawling(driver, target_station, target_address, target_category, subway, db_review_dict, is_test)
+            driver = review_crawling(driver, target_station, target_address, target_category, subway, db_review_dict,
+                                     is_test)
             driver.get(prev_url)
             WebDriverWait(driver, 20).until(
                 EC.visibility_of_all_elements_located(
                     (By.CSS_SELECTOR,
-                    '#content > div > div:nth-child(5) > div'))
+                     '#content > div > div:nth-child(5) > div'))
             )
         except:
             driver.get(prev_url)
@@ -384,12 +399,14 @@ def click_restaurant(driver, target_station, target_address, target_category, su
 def address_page(driver, target_station, target_address, sort_dist_flag, skip_flag, subway, db_review_dict, is_test):
     # cancel_button = driver.find_element(By.CSS_SELECTOR, '#button_search_address > button.btn-search-location-cancel.btn-search-location.btn.btn-default > span')
 
-    driver, sort_dist_flag, skip_flag, search_address_keyword = search_address(driver, target_station, target_address, sort_dist_flag)
+    driver, sort_dist_flag, skip_flag, search_address_keyword = search_address(driver, target_station, target_address,
+                                                                               sort_dist_flag)
 
     if not skip_flag:
         for target_category in category_name:
             driver = click_category(driver, target_category, search_address_keyword)
-            driver = click_restaurant(driver, target_station, search_address_keyword, target_category, subway,db_review_dict, is_test)
+            driver = click_restaurant(driver, target_station, search_address_keyword, target_category, subway,
+                                      db_review_dict, is_test)
             # driver.execute_script("arguments[0].click();", cancel_button)
 
     return driver, sort_dist_flag, skip_flag
@@ -399,7 +416,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num', required=True, type=int, help='자신이 맡은 번호를 입력해주세요.')
-    parser.add_argument('--test', default = False, type=bool, help='테스트여부 설정.' )
+    parser.add_argument('--test', default=False, type=bool, help='테스트여부 설정.')
     args = parser.parse_args()
 
     # 서버에서 실행 시 수행
@@ -429,7 +446,7 @@ if __name__ == '__main__':
         ) 
         order by `review_create_time`
     ) A
-    ''' if args.test else  '''
+    ''' if args.test else '''
         select `restaurant_name`, `review_create_time`
     from(
         select *
@@ -447,10 +464,9 @@ if __name__ == '__main__':
     # brands = sql_helper.get_df(query="SELECT DISTINCT restaurant_name FROM review").values.tolist()
 
     db_review_list = sql_helper.get_df(query=restaurant_review_query).values.tolist()
-    key = list(map(lambda x : x[0], db_review_list))
-    value = list(map(lambda  x : str(x[1]).split()[0], db_review_list))
+    key = list(map(lambda x: x[0], db_review_list))
+    value = list(map(lambda x: str(x[1]).split()[0], db_review_list))
     db_review_dict = dict(zip(key, value))
-
 
     if response.status_code == 200:
         # 거리 기준 정렬을 했는지 표시하는 boolean 변수
@@ -458,28 +474,30 @@ if __name__ == '__main__':
         skip_flag = False
 
         # 지하철 역 정보가 있는 subway_data.csv가 없으면 생성
-        if not os.path.exists('./data/pilot_subway_address_info.csv'):
+        if not os.path.exists('../data/pilot_subway_address_info.csv'):
             address_crawling()
 
         # 지하철 호선 번호와 해당 호선의 지하철 역 정보를 가져오기
-        subway_data = pd.read_csv('./data/pilot_subway_address_info.csv', encoding='utf-8')
+        subway_data = pd.read_csv('../data/pilot_subway_address_info.csv', encoding='utf-8')
         # subway_data.rename(columns={'Unnamed: 0' : 'station_name'},inplace=True)
         subway_list_dict = subway_data.to_dict(orient='row')
         subway_number2 = subway_data['subway_name'][0]
         target_statation = subway_data['station_name'].to_list()
         target_station_address = subway_data['address'].to_list()
 
-        start_point = (args.num-1) * 7
+        start_point = (args.num - 1) * 7
         end_point = 7 * args.num
         if args.num == 7:
             end_point = len(target_statation)
 
-
         # 지하철 역을 주소로 주면서 search address 반보고하기
-        for station, address in zip(target_statation[start_point:end_point], target_station_address[start_point:end_point]):
-        # for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
+        for station, address in zip(target_statation[start_point:end_point],
+                                    target_station_address[start_point:end_point]):
+            # for station, address in zip(['홍대입구', '건대입구'], ['동교동 165', '화양동 7-3']):
             subway = subway_number2 + ' ' + station + '역'
-            driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address, sort_dist_flag, skip_flag, subway, db_review_dict, args.test)
+            driver, sort_dist_flag, skip_flag = address_page(driver, station + '역 ' + subway_number2, address,
+                                                             sort_dist_flag, skip_flag, subway, db_review_dict,
+                                                             args.test)
             skip_flag = False
 
             df_main = pd.DataFrame(main_list)
@@ -514,23 +532,12 @@ if __name__ == '__main__':
             # main_list 초기화
             end_work_time = time.time()
 
-            LogHelper().i('*'*20)
-            LogHelper().i(f'total crawling time : {end_crawling_time-start_time} 초')
             LogHelper().i('*' * 20)
-            LogHelper().i(f'total work time : {end_work_time-start_time} 초')
+            LogHelper().i(f'total crawling time : {end_crawling_time - start_time} 초')
+            LogHelper().i('*' * 20)
+            LogHelper().i(f'total work time : {end_work_time - start_time} 초')
 
-            if os.path.exists('./reivew_crawling.log'):
-                f = open('./review_crawling', 'a')
-            else:
-                f = open('./review_crawling', 'w')
-
-            f.write(f'{station}역 {address} 배달업체 DB insert 시작!\n')
-            f.write(f'{station}역 {address} 배달업체 DB insert 완료!\n')
-            f.write(f'total crawling time : {(end_crawling_time-start_time)/60} 분\n')
-            f.write(f'total work time : {(end_work_time-start_time)} 분\n\n\n')
-            f.close()
             main_list = []
-
 
         # df_main.to_csv(f'pilot_main_{current_time}.csv', encoding='utf-8')
         # df_category.to_csv(f'pilot_category_{current_time}.csv', encoding='utf-8')
