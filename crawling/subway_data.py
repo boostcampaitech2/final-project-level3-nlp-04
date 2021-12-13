@@ -9,6 +9,8 @@ from selenium.common.exceptions import TimeoutException
 import time
 import tqdm
 import re
+from core.log_helper import LogHelper
+
 
 # 지하철 역 정보 가져오는 함수
 def subway_crawling():
@@ -30,10 +32,11 @@ def subway_crawling():
             station_info_dict[station_name] = station_info
 
         df = pd.DataFrame.from_dict(station_info_dict, orient='index')
-        df.rename(columns={0 : 'station_info'}, inplace=True)
+        df.rename(columns={0: 'station_info'}, inplace=True)
         df.to_csv('subway_data.csv', encoding='utf-8')
-    else :
-        print(response.status_code)
+    else:
+        LogHelper().i(response.status_code)
+
 
 if __name__ == '__main__':
     subway_crawling()
