@@ -7,7 +7,7 @@ from core.sql_helper import SqlHelper
 def preprocess(text):
     text = re.sub('[^0-9a-zA-Zㄱ-ㅎㅏ-ㅣ가-힣^~!?., ]', " ", text)  # 지정된 문자 말고 제외
     text = re.sub('\s', " ", text)  # 화이트스페이스 띄어쓰기로 변경
-    text = re.sub(r'([ㄱ-ㅎㅏ-ㅣ가-힣^~?!.,])\1{2,}', r'\1\1', text)  # 반복되는 문자 2개로 축소
+    text = re.sub(r'([a-zA-Zㄱ-ㅎㅏ-ㅣ가-힣^~?!.,])\1{2,}', r'\1\1', text)  # 반복되는 문자 2개로 축소
     return text
 
 
