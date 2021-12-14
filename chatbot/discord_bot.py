@@ -6,7 +6,6 @@ import discord
 import asyncio
 
 from function.help import *
-from function.review_gen import *
 
 
 token = 'OTE5ODc2MjA4Mzc4OTEyNzg4.YbcLeg.WqjPZPIj0qmtj_4y2iF59m-QV-Q' # 아까 메모해 둔 토큰을 입력합니다
