@@ -7,7 +7,6 @@ import asyncio
 
 from function.help import *
 
-
 token = 'OTE5ODc2MjA4Mzc4OTEyNzg4.YbcLeg.WqjPZPIj0qmtj_4y2iF59m-QV-Q' # 아까 메모해 둔 토큰을 입력합니다
 bot = commands.Bot(command_prefix='!')
 

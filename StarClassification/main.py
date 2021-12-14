@@ -77,6 +77,7 @@ args = TrainingArguments(
     output_dir="./output",
     evaluation_strategy="steps",
     eval_steps=100,
+    save_steps=100,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
     num_train_epochs=20,
@@ -84,16 +85,31 @@ args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model='eval_f1',
     gradient_accumulation_steps=4,
+    save_total_limit = 1
 )
 
-df = pd.read_csv('./review_for_tagging.csv')
+df = pd.read_csv('./modified_star_tagging.csv')
 X, y = np.array(list(df.review)), np.array(list(df.label))
 skf = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
+save_dir = args.output_dir
+# for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
+#     X_train, X_val = X[train_idx], X[val_idx]
+#     y_train, y_val = y[train_idx], y[val_idx]
 
-for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
-    X_train, X_val = X[train_idx], X[val_idx]
-    y_train, y_val = y[train_idx], y[val_idx]
-
+### 여기부터 ###
+for name in ['희락', '상민', '세진', '우창', '신곤', '재영', '상준']:
+    if name == '희락':
+        continue
+        
+    print("*" * 30, name, "*" * 30)
+    
+    df_train = df[df.annotator != name]
+    df_val = df[df.annotator == name]
+    
+    X_train, X_val = list(df_train.review), list(df_val.review)
+    y_train, y_val = list(df_train.label), list(df_val.label)
+    
+### 여기까지 변경 ###
     X_train_tokenized = tokenizer(X_train, padding=True, truncation=True, max_length=150)
     X_val_tokenized = tokenizer(X_val, padding=True, truncation=True, max_length=150)
 
@@ -105,20 +121,25 @@ for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
 
     wandb.init(entity='ssp',
                project='StarClassification',
-               name=f'Roberta-large-{k}',
+               name=f'Roberta-Large-{name}',
+#                name=f'Roberta-large-{k}',
                # name='Electra-v3',
                config=args)
 
+    args.output_dir = os.path.join(save_dir, name)
     trainer = Trainer(
         model=model,
         args=args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=4)],
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)],
     )
 
     trainer.train()
-    model.save_pretrained(os.path.join(args.output_dir, str(k)))
-
+#     model.save_pretrained(os.path.join(args.output_dir, name))
+    
+    metrics = trainer.evaluate()
+    metrics['best_f1'] = metrics.pop('eval_f1')
+    wandb.log(metrics)
     wandb.join()

@@ -3,13 +3,11 @@
 
 # from _typeshed import WriteableBuffer
 from core.sql_helper import SqlHelper
-from core.log_helper import LogHelper
 from subway_data import *
 from address_crawling import *
 from datetime import datetime
-from datetime import timedelta
 import os
-import config as c
+from crawling import config as c
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
