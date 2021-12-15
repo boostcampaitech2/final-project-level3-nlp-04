@@ -13,8 +13,7 @@ import os
 import re
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--epoch', type=int, default=100,
+parser = argparse.ArgumentParser()parser.add_argument('--epoch', type=int, default=100,
 					help="epoch 를 통해서 학습 범위를 조절합니다.")
 parser.add_argument('--save_path', type=str, default='',
 					help="학습 결과를 저장하는 경로입니다.")
