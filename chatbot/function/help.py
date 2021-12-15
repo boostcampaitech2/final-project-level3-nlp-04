@@ -30,7 +30,6 @@ async def func1(message, bot):
 
 
 async def func2(message, bot):
-    categoryfunc = [chicken, pizza_western, chinese, korean, japanese, pigs, midnight_food, snack, cafe_desserts]
     categorynames = ['치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']  
     embed = discord.Embed(title="Choosing Category",
                             description="보고 싶은 카테고리를 이모지를 이용해 선택해주세요.",
@@ -49,7 +48,7 @@ async def func2(message, bot):
     try:
         reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
         if reaction.emoji in emoji_list:
-            await categoryfunc[emoji_list.index(reaction.emoji)](reaction.message)
+            await ranked_stores(reaction.message, categorynames[emoji_list.index(reaction.emoji)])
         
     except asyncio.TimeoutError:
         await message.channel.send('⚡ 20초가 지났습니다. 다시 !help를 입력해주세요.')

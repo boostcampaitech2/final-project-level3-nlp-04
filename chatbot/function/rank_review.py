@@ -2,13 +2,13 @@ import sys
 sys.path.append('/opt/ml/final-project-level3-nlp-04')
 
 from core.sql_helper import SqlHelper
-import config as c
+from config import DB_CONFIG
 
 from collections import defaultdict
 
 def get_ranked_stores(subway):
     # data 불러오기
-    db = SqlHelper('3.37.82.117', 3306, 'review', 'root', 'jfhdzzangaws2')
+    db = SqlHelper(**DB_CONFIG)
     subway_data = db.get_df(f'Select category_name, restaurant_name, total_star from review where subway = "2호선 강남역"')
 
     # list에는 전체 별점 평균, 5점 개수, 3점 개수, 1점 개수
