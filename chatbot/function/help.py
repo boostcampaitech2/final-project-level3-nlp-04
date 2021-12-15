@@ -51,18 +51,17 @@ async def func1(message, bot):
 
 
 async def func2(message, bot):
-    categoryfunc = [show_category, chicken, serving, western, total]
+    categoryfunc = [chicken, pizza_western, chinese, korean, japanese, pigs, midnight_food, snack, cafe_desserts]
+    categorynames = ['치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']  
     embed = discord.Embed(title="Choosing Category",
                             description="보고 싶은 카테고리를 이모지를 이용해 선택해주세요.",
                             color=0x00aaaa)
-    embed.add_field(name="1️⃣", value="피자", inline=False)
-    embed.add_field(name="2️⃣", value="치킨", inline=False)
-    embed.add_field(name="3️⃣", value="1인분 주문", inline=False)
-    embed.add_field(name="4️⃣", value="햄버거/양식", inline=False)
-    embed.add_field(name="5️⃣", value="전체", inline=False)
+    
+    for i in range(len(categorynames)):
+        embed.add_field(name=emoji_list[i], value=categorynames[i], inline=False)
 
     msg = await message.channel.send(embed=embed)    
-    for emoji in emoji_list[:5]:
+    for emoji in emoji_list[:len(categorynames)]:
         await msg.add_reaction(emoji)     
 
     def check_emoji(reaction, user):

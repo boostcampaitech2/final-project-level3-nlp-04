@@ -7,7 +7,12 @@ import asyncio
 
 from function.help import *
 
+<<<<<<< HEAD
 token = 'OTE5ODc2MjA4Mzc4OTEyNzg4.YbcLeg.WqjPZPIj0qmtj_4y2iF59m-QV-Q' # 아까 메모해 둔 토큰을 입력합니다
+=======
+
+token = 'OTE5ODgyODc3ODIxMzk5MDQw.YbcRsA.Fx2r1ivN-6ZYmKY8IEI1n523rH4' # 아까 메모해 둔 토큰을 입력합니다
+>>>>>>> 130c57ac88611ce9a75a188a70978c51c3d570bf
 bot = commands.Bot(command_prefix='!')
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
