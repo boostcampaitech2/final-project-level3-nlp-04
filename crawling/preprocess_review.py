@@ -25,12 +25,14 @@ def main():
         query = "select * from review"
     else:
         insert_time = preprocessed_review_df.iloc[0].insert_time
-        query = f"select * from review where insert_time > '{insert_time}'"
+        query = f"select * from review where insert_time >= '{insert_time}'"
 
     review_df = sql_helper.get_df(query)
 
     if review_df is not None:
         review_df['preprocessed_review_context'] = review_df.review_context.apply(lambda x: preprocess(x))
+
+        LogHelper().i('DB 저장 시작!')
 
         sql_helper.insert(review_df, table_name='preprocessed_review')
 
