@@ -4,12 +4,16 @@ from discord.ext.commands import Bot
 
 import discord
 import asyncio
-from function.rank_review import get_by_category
+from function.rank_review import RankReview
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
-async def ranked_stores(message, category, place="강남역"):
-    stores = get_by_category(category, place)
+async def rank_reviews(message, category, place="강남역"):
+    RankedReview = RankReview(place)
+    await ranked_stores(message, RankedReview, category)
+
+async def ranked_stores(message, data, category):
+    stores = data.get_by_category(category)
     store_names = []
     store_stars = []
 
@@ -30,7 +34,8 @@ async def ranked_stores(message, category, place="강남역"):
     
     for i in range(len(store_stars)):
         embed.add_field(name=emoji_list[i], value=f" {store_names[i]} {store_stars[i][0]}점 📝{store_stars[i][1]}건 😁 {store_stars[i][2]}% 🙂 {store_stars[i][3]}% 😫 {store_stars[i][4]}% ❗1건", inline=False)
+    
+    msg = await message.channel.send(embed=embed)
 
-    msg = await message.channel.send(embed=embed)    
     # for emoji in emoji_list[:len(store_names)]:
     #     await msg.add_reaction(emoji)

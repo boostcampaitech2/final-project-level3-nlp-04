@@ -69,7 +69,7 @@ async def func2(message, bot):
     try:
         reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
         if reaction.emoji in emoji_list:
-            await ranked_stores(reaction.message, categorynames[emoji_list.index(reaction.emoji)])
+            await rank_reviews(reaction.message, categorynames[emoji_list.index(reaction.emoji)])
         
     except asyncio.TimeoutError:
         await message.channel.send('⚡ 20초가 지났습니다. 다시 !help를 입력해주세요.')
