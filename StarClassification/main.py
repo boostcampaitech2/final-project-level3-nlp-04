@@ -70,7 +70,7 @@ model_name = "klue/roberta-large"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
 config = AutoConfig.from_pretrained(model_name)
-config.num_labels = 9
+config.num_labels = 10
 
 args = TrainingArguments(
     output_dir="./output",
@@ -79,15 +79,15 @@ args = TrainingArguments(
     save_steps=100,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
-    num_train_epochs=20,
+    num_train_epochs=30,
     seed=seed,
     load_best_model_at_end=True,
     metric_for_best_model='eval_f1',
     gradient_accumulation_steps=4,
-    save_total_limit = 1
+    save_total_limit=1
 )
 
-df = pd.read_csv('./comparison.csv')
+df = pd.read_csv('./star_classification.csv')
 X, y = np.array(list(df.review)), np.array(list(df.label))
 skf = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
 save_dir = args.output_dir
@@ -126,7 +126,7 @@ for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
     wandb.init(entity='ssp',
                project='StarClassification',
                # name=f'Roberta-Large-{name}',
-               name=f'post-Roberta-large-{k}',
+               name=f'Final-Roberta-large-{k}',
                # name='Electra-v3',
                config=args)
 
@@ -138,7 +138,7 @@ for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)],
+        # callbacks=[EarlyStoppingCallback(early_stopping_patience=5)],
     )
 
     # predict = trainer.predict(test_dataset=val_dataset)
@@ -154,5 +154,3 @@ for k, (train_idx, val_idx) in enumerate(skf.split(X, y), 1):
     metrics['best_f1'] = metrics.pop('eval_f1')
     wandb.log(metrics)
     wandb.join()
-
-    break
