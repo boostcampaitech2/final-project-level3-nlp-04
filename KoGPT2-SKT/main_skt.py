@@ -4,50 +4,68 @@ from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 import torch
 
-from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel, TrainingArguments, Trainer
-from tqdm import tqdm
+from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel, TrainingArguments, Trainer, EarlyStoppingCallback
+from datasets import load_metric
 
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import random
 import wandb
 import os
+import pickle
 
 
 class ReviewDataset(Dataset):
-    def __init__(self, df, tokenizer):
-        self.df = df
-        self.input_ids = []
-        self.attn_masks = []
-        self.eos_id = tokenizer.eos_token_id
-        
-        sents = []
-        for _, row in self.df.iterrows():
-            row.menu = row.menu[:30]
-            sent = tokenizer.bos_token
-            sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
-            sent += tokenizer.eos_token
-            sents.append(sent)
+    def __init__(self, df, tokenizer, type):
+        path = f'./{type}_dataset_1e5.pickle'
+        if os.path.isfile(path):
+            print(f"Loading {type} Dataset of {len(df)}")
+            with open(path, 'rb') as file:
+                self.output = pickle.load(file)
+        else:
+            print(f"Tokenizing {type} Dataset of {len(df)}")
+            self.df = df
+            self.output = {'input_ids': [],
+                           'attention_mask': [],
+                           }
 
-        for sent in sents:
-            sent = tokenizer(sent,
-                             truncation=True,
-                             max_length=200,
-                             return_tensors='pt',
-                             padding="max_length",
-                             )
-            self.input_ids.append(sent['input_ids'])
-            self.attn_masks.append(sent['attention_mask'])
+            sents = []
+            for _, row in tqdm(self.df.iterrows()):
+                row.menu = row.menu[:30]
+                sent = tokenizer.bos_token
+                sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
+                sent += tokenizer.eos_token
+                sents.append(sent)
+
+            for sent in tqdm(sents):
+                sent = tokenizer(sent,
+                                 truncation=True,
+                                 max_length=200,
+                                 return_tensors='pt',
+                                 padding="max_length",
+                                 )
+                self.output['input_ids'].append(sent['input_ids'])
+                self.output['attention_mask'].append(sent['attention_mask'])
+
+            with open(path, 'wb') as file:
+                pickle.dump(self.output, file)
         
     def __len__(self):
-        return len(self.input_ids)
+        return len(self.output['input_ids'])
         
     def __getitem__(self, idx):
-        return {'input_ids': self.input_ids[idx],
-                'attention_mask': self.attn_masks[idx],
-                'labels': self.input_ids[idx],
+        return {'input_ids': self.output['input_ids'][idx],
+                'attention_mask': self.output['attention_mask'][idx],
+                'labels': self.output['input_ids'][idx],
                 }
 
+# metric_name = 'glue'
+# metric = load_metric(metric_name, keep_in_memory=True)
+# def compute_metrics(eval_pred):
+#     logits, labels = eval_pred
+#     predictions = np.argmax(logits, axis=-1)
+#     return {metric_name: metric.compute(predictions=predictions, references=labels)}
 
 seed = 42
 random.seed(seed)
@@ -70,28 +88,34 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
 model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2', pad_token_id=tokenizer.eos_token_id).to(device)
 model.train()
 
-df = pd.read_csv('../StarClassification/comparison.csv')
-train_df, valid_df = train_test_split(df, test_size=0.1, stratify=df.label, shuffle=True, random_state=seed)
-train_dataset = ReviewDataset(train_df, tokenizer)
-valid_dataset = ReviewDataset(valid_df, tokenizer)
+df = pd.read_csv('../StarClassification/pre_1fold_211217dataset.csv')
+df = df.iloc[:100000]
+train_df, test_df = train_test_split(df, test_size=0.1, stratify=df.label, shuffle=True, random_state=seed)
+train_df, valid_df = train_test_split(train_df, test_size=0.2, stratify=train_df.label, shuffle=True, random_state=seed)
+
+
+train_dataset = ReviewDataset(train_df, tokenizer, 'train')
+valid_dataset = ReviewDataset(valid_df, tokenizer, 'valid')
+test_dataset = ReviewDataset(test_df, tokenizer, 'test')
 
 # train_loader = DataLoader(train_dataset, batch_size=args.train_bs, shuffle=True, pin_memory=True)
 # valid_loader = DataLoader(valid_dataset, batch_size=args.valid_bs, shuffle=True, pin_memory=True)
 
-
-
 args = TrainingArguments(
     output_dir='./output',
-    num_train_epochs=10,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
+    num_train_epochs=30,
+    per_device_train_batch_size=56,
+    per_device_eval_batch_size=16,
     warmup_steps=100,
     weight_decay=0.01,
     evaluation_strategy="steps",
-    eval_steps=500,
-    save_steps=500,
+    eval_steps=200,
+    save_steps=200,
     seed=seed,
     save_total_limit=1,
+    load_best_model_at_end=True,
+    # metric_for_best_model=metric_name,
+    # gradient_accumulation_steps=3,
 )
 
 wandb.init(entity='ssp',
@@ -104,9 +128,25 @@ trainer = Trainer(
     args=args,
     train_dataset=train_dataset,
     eval_dataset=valid_dataset,
+    # compute_metrics=compute_metrics,
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=7)],
 )
 
 trainer.train()
+# trainer.save_model()
+
+pred = trainer.predict(test_dataset=test_dataset)
+
+# save
+with open('data.pickle', 'wb') as f:
+    pickle.dump(pred, f, pickle.HIGHEST_PROTOCOL)
+
+predictions = np.argmax(pred[0], axis=-1)
+try:
+    print(predictions[:10])
+except:
+    print(predictions[0])
+
 # learning_rate = 3e-5
 # criterion = torch.nn.CrossEntropyLoss()
 # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
