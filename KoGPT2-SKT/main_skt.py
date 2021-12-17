@@ -71,6 +71,8 @@ model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2', pad_token_id=token
 model.train()
 
 df = pd.read_csv('../StarClassification/comparison.csv')
+df = df.dropna()
+
 train_df, valid_df = train_test_split(df, test_size=0.1, stratify=df.label, shuffle=True, random_state=seed)
 train_dataset = ReviewDataset(train_df, tokenizer)
 valid_dataset = ReviewDataset(valid_df, tokenizer)
