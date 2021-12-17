@@ -31,6 +31,7 @@ def main():
 
     if review_df is not None:
         review_df['preprocessed_review_context'] = review_df.review_context.apply(lambda x: preprocess(x))
+        review_df = review_df[review_df.preprocessed_review_context != '']
 
         LogHelper().i('DB 저장 시작!')
 
