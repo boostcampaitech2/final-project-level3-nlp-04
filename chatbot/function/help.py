@@ -7,6 +7,7 @@ import asyncio
 
 from function.review import *
 from function.category import *
+from function.category_rank import RankReview
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
@@ -51,29 +52,44 @@ async def func1(message, bot):
 
 
 async def func2(message, bot):
-    categorynames = ['치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']  
-    embed = discord.Embed(title="Choosing Category",
-                            description="보고 싶은 카테고리를 이모지를 이용해 선택해주세요.",
-                            color=0x00aaaa)
     
-    for i in range(len(categorynames)):
-        embed.add_field(name=emoji_list[i], value=categorynames[i], inline=False)
+    embed = discord.Embed(title="Loading", description="가게별 랭킹 로딩 중입니다.........", color=0x00aaaa)
+    msg = await message.channel.send(embed=embed)
+    await msg.add_reaction("❤")
+    await msg.add_reaction("🧡")
+    await msg.add_reaction("💛")
 
-    msg = await message.channel.send(embed=embed)    
-    for emoji in emoji_list[:len(categorynames)]:
-        await msg.add_reaction(emoji)     
+    RankedReview = RankReview(subway="강남역")
 
-    def check_emoji(reaction, user):
-        return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+    while True:
+        categorynames = ['치킨', '피자/양식', '중국집', '한식', '일식/돈까스', '족발/보쌈', '야식', '분식', '카페/디저트']  
+        embed = discord.Embed(title="Choosing Category",
+                                description="보고 싶은 카테고리를 이모지를 이용해 선택해주세요.",
+                                color=0x00aaaa)
         
-    try:
-        reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
-        if reaction.emoji in emoji_list:
-            await rank_reviews(reaction.message, categorynames[emoji_list.index(reaction.emoji)])
-        
-    except asyncio.TimeoutError:
-        await message.channel.send('⚡ 20초가 지났습니다. 다시 !help를 입력해주세요.')
-        return
+        for i in range(len(categorynames)):
+            embed.add_field(name=emoji_list[i], value=categorynames[i], inline=False)
+
+        msg = await message.channel.send(embed=embed)    
+        for emoji in emoji_list[:len(categorynames)]:
+            await msg.add_reaction(emoji)     
+
+        def check_emoji(reaction, user):
+            return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+            
+        try:
+            reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+            if reaction.emoji in emoji_list:
+                ret = await ranked_stores(reaction.message, bot, RankedReview, categorynames[emoji_list.index(reaction.emoji)])
+                if ret == -1:
+                    return -1
+            
+        except asyncio.TimeoutError:
+            await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
+            return -1
+
+        if ret == 0:
+            break
     
 async def func3(message, bot):
     pass
