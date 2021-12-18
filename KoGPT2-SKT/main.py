@@ -14,17 +14,17 @@ import re
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epoch', type=int, default=100,
+parser.add_argument('--epoch', type=int, default=10,
                     help="epoch 를 통해서 학습 범위를 조절합니다.")
-parser.add_argument('--save_path', type=str, default='',
+parser.add_argument('--save_path', type=str, default='output/',
                     help="학습 결과를 저장하는 경로입니다.")
 parser.add_argument('--load_path', type=str, default='./checkpoint/',
                     help="학습된 결과를 불러오는 경로입니다.")
 parser.add_argument('--samples', type=str, default="samples/",
                     help="생성 결과를 저장할 경로입니다.")
-parser.add_argument('--data_file_path', type=str, default='../review_for_tagging.csv',
+parser.add_argument('--data_file_path', type=str, default='../StarClassification/pre_1fold_211217dataset.csv',
                     help="학습할 데이터를 불러오는 경로입니다.")
-parser.add_argument('--batch_size', type=int, default=32,
+parser.add_argument('--batch_size', type=int, default=1,
                     help="batch_size 를 지정합니다.")
 args = parser.parse_args()
 
@@ -42,11 +42,11 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
     import torch
     from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
     model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2').to(device)
-    tok = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
+    tokenizer = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
                                                   bos_token='<s>', eos_token='</s>', unk_token='<unk>',
                                                   pad_token='<pad>', mask_token='<mask>', sep_token='<sep>')
 
-    vocab = tok.get_vocab()
+    vocab = tokenizer.get_vocab()
     vocab = gluonnlp.vocab.BERTVocab(vocab,
                                      mask_token=None,
                                      sep_token='<sep>',
@@ -55,11 +55,18 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
                                      padding_token='<pad>',
                                      bos_token='<s>',
                                      eos_token='</s>')
-
+    # print(tokenizer.unk_token_id)
+    # print(vocab[vocab.unknown_token])
+    #
+    # print(sorted(tokenizer.get_vocab().items(), key=lambda x: x[1])[:10])
+    #
+    # exit()
     model.train()
     count = 0
 
-    dataset = Read_Dataset(data_file_path, vocab, tok)
+    dataset = Read_Dataset(data_file_path, vocab, tokenizer)
+    model.resize_token_embeddings(len(vocab))
+
     print("Read_Dataset ok")
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
 
@@ -71,16 +78,22 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
     avg_loss = (0.0, 0.0)
     sents = []
 
-    word = "음식점은 롯데리아, 메뉴는 불고기버거, 음식은 5점, 서비스와 배달은 1점<sep>"
+    word = "<s>음식점은 KFC-사당역점, 메뉴는 오리지널치킨 8조각/1,비스켓/2, 음식 점수는 5점, 서비스 및 배달 점수는 3점 리뷰는 "
+    # word = f"음식 점수는 5점, 서비스 및 배달 점수는 3점 리뷰는 "
     print(args)
     for epoch in range(1, epoch+1):
         pbar = tqdm(data_loader)
         for idx, data in enumerate(pbar):
             optimizer.zero_grad()
-
+            # print("1 ", data)
             data = torch.stack(data[0])  # list of Tensor로 구성되어 있기 때문에 list를 stack을 통해 변환해준다.
+            # print("2 ", data)
             data = data.transpose(1, 0)
+            # print("3 ", data)
             data = data.to(device)
+            # data = data.squeeze(0)
+            # print("4 ", data)
+            # exit()
 
             outputs = model(data, labels=data)
             loss, logits = outputs[:2]
@@ -89,25 +102,27 @@ def main(epoch, save_path, load_path, samples, data_file_path, batch_size):
             avg_loss = (avg_loss[0] * 0.99 + loss, avg_loss[1] * 0.99 + 1.0)
             optimizer.step()
             pbar.set_description('epoch no.{0} train no.{1}  loss = {2:.5f} avg_loss = {3:.5f}'.format(epoch, count, loss, avg_loss[0] / avg_loss[1]))
+            count += 1
 
-        # generator 진행
-        sent = sample_sequence(model, tok, vocab, sent=word, text_size=200, temperature=0.7, top_p=0.8, top_k=40)
-        sent = sent.replace("<unused0>", "\n") # 비효율적이지만 엔터를 위해서 등장
-        sent = auto_enter(sent)
-        sent = sent.replace('<pad>', '')
-        print(sent)
+            if not count % (len(dataset) // 5):
+                # generator 진행
+                sent = sample_sequence(model, tokenizer, vocab, sent=word, text_size=200, temperature=0.7, top_p=0.8, top_k=40)
+                sent = sent.replace("<unused0>", "\n") # 비효율적이지만 엔터를 위해서 등장
+                sent = auto_enter(sent)
+                sent = sent.replace('<pad>', '')
+                print(sent)
 
-        sents.append(f'{epoch} : {sent}')
+                sents.append(f'{epoch} : {sent}')
 
-        # 모델 저장
-        # try:
-        if not epoch % 25:
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss
-            }, f'{save_path}/KoGPT2_checkpoint_{str(epoch)}.tar')
+            # 모델 저장
+            # try:
+            if not count % len(dataset):
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': loss
+                }, f'{save_path}/KoGPT2_checkpoint_{str(epoch)}.tar')
     # except:
     #    pass
 

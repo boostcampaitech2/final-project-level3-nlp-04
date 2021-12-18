@@ -67,8 +67,8 @@ def sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_
 
         # 끝나면 본격적으로 만들어 놓기.
         if gen == '</s>' or count > text_size:
-            print(count)
-            print('to_tokens:', vocab.to_tokens(torch.argmax(pred, axis=-1).squeeze().tolist()))
+            # print(count)
+            # print('to_tokens:', vocab.to_tokens(torch.argmax(pred, axis=-1).squeeze().tolist()))
             #print(sent)
             sent += gen.replace('▁', ' ')
             generated_text += gen.replace('▁', ' ')
@@ -80,7 +80,7 @@ def sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_
 
         sent += gen.replace('▁', ' ')
         generated_text += gen.replace('▁', ' ')
-        toked = tok.tokenize(sent)
+        toked = tok.tokenize(sent.replace('\n', ' '))
         count += 1
 
     return sent

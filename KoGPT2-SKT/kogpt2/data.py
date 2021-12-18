@@ -54,34 +54,37 @@ class Read_Dataset(Dataset):
 		file = open(self.file_path, 'r', encoding='utf-8')
 
 		df = pd.read_csv(self.file_path)
+		# df = df.iloc[:10000]
+		print("len(df) is ", len(df))
 
 		datasets = []
-		print("음식점은 ***, 메뉴는 ***, 음식은 ***점, 서비스와 배달은 ***점<sep>***")
 		for _, row in df.iterrows():
 			row.menu = row.menu[:30]
-			datasets.append([
-				f'음식점은 {row.restaurant}, 메뉴는 {row.menu},'
-				f'음식은 {int(row.food)}점, 서비스와 배달은 {int(row.delvice)}점'
-				f'{self.vocab.sep_token}{row.review}'
-			])
+			if len(row.review) < 50:
+				continue
+			sent = tokenizer.bos_token
+			sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
+			# sent += f'음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
+			datasets.append(sent)
 
 		for line in datasets:
-			# if len(line[0]) < 45:
-			# 	continue
-			toeknized_line = tokenizer.tokenize(line[0])
-			toeknized_line = toeknized_line[:200]
-			toeknized_line += [vocab.padding_token] * (200 - len(toeknized_line))
-
-			index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
-
-			# if len(index_of_words) > 1024:
-			#    continue
-			# elif len(index_of_words) < 10:
-			#    continue
+			tokenized_line = tokenizer.tokenize(line)
+			tokenized_line = tokenized_line[:199]
+			tokenized_line += [tokenizer.eos_token_id]
+			# ids = []
+			# for token in tokenized_line:
+			# 	if token not in vocab:
+			# 		vocab[token] = len(vocab)
+			# 	ids.append(vocab[token])
+			tokenized_line = vocab[tokenized_line]
+			# print(tokenized_line)
+			# print(tokenizer.sep_token)
+			# exit()
+			# index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
 
 			# print(len(index_of_words))
 			# print(line)
-			self.data.append([index_of_words])
+			self.data.append([tokenized_line])
 
 		print(np.shape(self.data))
 
