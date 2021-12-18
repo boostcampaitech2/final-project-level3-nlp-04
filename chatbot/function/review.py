@@ -42,6 +42,7 @@ async def food_enter(message, bot):
     if reaction.emoji in emoji_list:
         return emoji_list.index(reaction.emoji)+1
 
+
 async def delvice_enter(message, bot):
     embed = discord.Embed(title="FooReview Bot",
                           description="배달 및 서비스 별점을 입력해주세요",

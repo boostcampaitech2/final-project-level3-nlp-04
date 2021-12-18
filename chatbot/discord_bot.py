@@ -11,7 +11,7 @@ token = 'OTE5ODgyODc3ODIxMzk5MDQw.YbcRsA.Fx2r1ivN-6ZYmKY8IEI1n523rH4' # 아까 �
 bot = commands.Bot(command_prefix='!')
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "💤"]
-helpfunc = [func1, func2, func3, func4, func5]
+helpfunc = [func1, func2, func3]
         
 @bot.event
 async def on_ready(): # 봇이 준비가 되면 1회 실행되는 부분입니다.
@@ -27,9 +27,8 @@ async def help(message):
                             description="무엇을 도와드릴까요? 이모지를 눌러주세요",
                             color=0x00aaaa)
         embed.add_field(name="1️⃣", value="리뷰 생성", inline=False)
-        embed.add_field(name="2️⃣", value="최근 1개월 BEST 음식점", inline=False)
+        embed.add_field(name="2️⃣", value="내 지역 BEST 음식점", inline=False)
         embed.add_field(name="3️⃣", value="키워드로 찾는 음식점", inline=False)
-        embed.add_field(name="4️⃣", value="리뷰기반 추천 음식점", inline=False)
         embed.add_field(name="💤", value="프로그램 종료하기", inline=False)
         msg = await message.channel.send(embed=embed)
 
