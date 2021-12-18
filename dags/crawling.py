@@ -10,7 +10,7 @@ with DAG(
     dag_id="auto_crawling",
     description="Auto Crawling",
     start_date=days_ago(0),
-    schedule_interval="0 17 * * *",
+    schedule_interval="25 17 * * *",
     tags=["auto_crawling"],
 ) as dag:
 
