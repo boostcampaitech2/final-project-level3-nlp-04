@@ -5,6 +5,7 @@ import yaml
 
 import numpy as np
 import torch
+from torch.optim.lr_scheduler import ReduceLROnPlateau, _LRScheduler
 from transformers import is_torch_available, AutoConfig, AutoTokenizer
 
 from retriever.model.retrieval_encoder import RetrievalEncoder
@@ -45,6 +46,7 @@ def save_pickle(path, file):
     with open(path, 'wb') as f:
         pickle.dump(file, f)
 
+
 class Config(object):
     def __init__(self, dict_config=None):
         super().__init__()
@@ -65,3 +67,27 @@ class Config(object):
                 self.__dict__[key] = Config(dict_config[key])
             else:
                 self.__dict__[key] = dict_config[key]
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+
+class ReduceLROnPlateauPatch(ReduceLROnPlateau, _LRScheduler):
+    def get_lr(self):
+        return [ group['lr'] for group in self.optimizer.param_groups ]

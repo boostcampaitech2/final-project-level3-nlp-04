@@ -18,9 +18,9 @@ save_steps: 100
 early_stopping_patience: 5
 
 # ModelArguments
-model_name_or_path: 'klue/roberta-small'
-config_name: 'klue/roberta-small'
-tokenizer_name: 'klue/roberta-small'
+model_name_or_path: 'klue/bert-base'
+config_name: 'klue/bert-base'
+tokenizer_name: 'klue/bert-base'
 
 # DataTrainingArguments
 dataset_path: '/opt/ml/final_project/data/retrieval_dataset'
@@ -33,5 +33,5 @@ top_k_retrieval: 30
 use_faiss: False
 
 # WandBArguments
-project_name: 'final_project_dense_retriever'
-run_name: 'klue_roberta_small'
+project_name: 'final_project_dense_retriever_test'
+run_name: 'klue_bert_base'

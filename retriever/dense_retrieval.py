@@ -1,44 +1,41 @@
+from functools import lru_cache
 import os
-import json
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import time
 from contextlib import contextmanager
-from core.sql_helper import SqlHelper
-import config as c
 
 import faiss
-import pickle
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
-
+from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
 from typing import List, Tuple, NoReturn, Any, Optional, Union
+from datasets import Dataset, load_from_disk, Features, Value, DatasetDict
 
-from datasets import (
-    Dataset,
-    load_from_disk,
-)
-
-
-# 학습이 이루어지는 시간을 측정하기 위해 사용되는 함수
 from retriever.utils import get_pickle, save_pickle
+from core.sql_helper import SqlHelper
+import config as c
 
 
 @contextmanager
 def timer(name):
+    """학습이 이루어지는 시간을 측정하기 위해 사용되는 함수"""
     t0 = time.time()
     yield
     print(f"[{name}] done in {time.time() - t0:.3f} s")
 
 
 class DenseRetrieval:
-    def __init__(self, config, tokenizer, p_encoder, q_encoder, num_neg=2, data_path='../data'):
+    def __init__(self, config, tokenizer, p_encoder, q_encoder, data_path='../data'):
         self.config = config
         self.tokenizer = tokenizer
         self.p_encoder = p_encoder
         self.q_encoder = q_encoder
-        self.num_neg = num_neg
         self.data_path = data_path
 
         self.sql_helper = SqlHelper(**c.DB_CONFIG)
@@ -52,6 +49,7 @@ class DenseRetrieval:
         self.p_embedding = None  # get_sparse_embedding()로 생성합니다
         self.indexer = None  # build_faiss()로 생성합니다.
 
+    @lru_cache(maxsize=None)
     def get_review(self):
         query = """
             SELECT restaurant_name, preprocessed_review_context FROM preprocessed_review
@@ -108,7 +106,7 @@ class DenseRetrieval:
                     if torch.cuda.is_available():
                         batch = tuple(t.cuda() for t in batch)
 
-                    if 'roberta' in self.config.retrieval_model_name_or_path:
+                    if 'roberta' in self.config.model_name_or_path:
                         p_inputs = {'input_ids': batch[0],
                                     'attention_mask': batch[1]}
                     else:
@@ -124,28 +122,48 @@ class DenseRetrieval:
             save_pickle(emb_path, self.p_embedding)
             print("Embedding pickle saved.")
 
+    def make_dataset(self):
+        df_path = os.path.join(self.data_path, 'retriever_df.csv')
+        df = pd.read_csv(df_path)
+        df['query'] = df['keyword']
+        df['context'] = df['preprocessed_review_context']
+        df['id'] = list(map(str, range(len(df))))
+
+        train_df, valid_df = train_test_split(df, test_size=.3, shuffle=True, random_state=self.config.seed)
+        f = Features({'context': Value(dtype='string', id=None),
+                      'query': Value(dtype='string', id=None),
+                      'id': Value(dtype='string', id=None)})
+
+        datasets = DatasetDict({'train': Dataset.from_pandas(train_df, features=f),
+                                'validation': Dataset.from_pandas(valid_df, features=f)})
+
+        datasets.save_to_disk(os.path.join(self.data_path, 'retrieval_dataset'))
+
+    @property
     def get_dataloader(self):
         '''train, validation, test의 dataloader와 dataset를 반환하는 함수'''
-        datasets = load_from_disk(self.data_args.dataset_name)
+        if not os.path.exists(self.config.dataset_path):
+            self.make_dataset()
+        datasets = load_from_disk(self.config.dataset_path)
         print(datasets)
 
         train_dataset = datasets['train']
         eval_dataset = datasets['validation']
 
         train_q_seqs = self.tokenizer(
-            train_dataset['question'], padding='max_length', truncation=True, return_tensors='pt',
-            return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True)
+            train_dataset['query'], padding='max_length', truncation=True, return_tensors='pt',
+            return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True)
         train_p_seqs = self.tokenizer(
             train_dataset['context'], padding='max_length', truncation=True, return_tensors='pt',
-            return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True)
+            return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True)
         eval_q_seqs = self.tokenizer(
-            eval_dataset['question'], padding='max_length', truncation=True, return_tensors='pt',
-            return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True)
+            eval_dataset['query'], padding='max_length', truncation=True, return_tensors='pt',
+            return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True)
         eval_p_seqs = self.tokenizer(
             eval_dataset['context'], padding='max_length', truncation=True, return_tensors='pt',
-            return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True)
+            return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True)
 
-        if 'roberta' in self.model_args.retrieval_model_name_or_path:
+        if 'roberta' in self.config.model_name_or_path:
             train_dataset = TensorDataset(train_p_seqs['input_ids'], train_p_seqs['attention_mask'],
                                           train_q_seqs['input_ids'], train_q_seqs['attention_mask'])
             eval_dataset = TensorDataset(eval_p_seqs['input_ids'], eval_p_seqs['attention_mask'],
@@ -160,10 +178,10 @@ class DenseRetrieval:
 
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler,
-                                      batch_size=self.training_args.per_device_retrieval_train_batch_size)
+                                      batch_size=self.config.per_device_train_batch_size, drop_last=True)
         eval_sampler = RandomSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler,
-                                     batch_size=self.training_args.per_device_retrieval_eval_batch_size)
+                                     batch_size=self.config.per_device_eval_batch_size, drop_last=True)
 
         return train_dataloader, eval_dataloader
 
@@ -245,12 +263,12 @@ class DenseRetrieval:
             # Retrieve한 Passage를 pd.DataFrame으로 반환합니다.
             total = []
             with timer("query exhaustive search"):
-                doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
+                doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["query"], k=topk)
 
             for idx, example in enumerate(tqdm(query_or_dataset, desc="Dense retrieval: ")):
                 tmp = {
                     # Query와 해당 id를 반환합니다.
-                    "question": example["question"],
+                    "query": example["query"],
                     "id": example["id"],
                     # Retrieve한 Passage의 id, context를 반환합니다.
                     "context_id": doc_indices[idx],
@@ -258,10 +276,9 @@ class DenseRetrieval:
                         [self.contexts[pid] for pid in doc_indices[idx]]
                     ),
                 }
-                if "context" in example.keys() and "answers" in example.keys():
+                if "context" in example.keys():
                     # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
                     tmp["original_context"] = example["context"]
-                    tmp["answers"] = example["answers"]
                 total.append(tmp)
 
             cqas = pd.DataFrame(total)
@@ -287,8 +304,8 @@ class DenseRetrieval:
                 padding='max_length',
                 truncation=True,
                 return_tensors='pt',
-                return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True,
-            ).to(self.training_args.device)
+                return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True,
+            ).to('cuda')
             query_vec = self.q_encoder(**q_seq).detach().to('cpu').numpy()  # (num_query=1, emb_dim)
 
         with timer("query ex search"):
@@ -312,10 +329,10 @@ class DenseRetrieval:
             padding='max_length',
             truncation=True,
             return_tensors='pt',
-            return_token_type_ids=False if 'roberta' in self.model_args.retrieval_model_name_or_path else True,
-        ).to(self.training_args.device)
+            return_token_type_ids=False if 'roberta' in self.config.model_name_or_path else True,
+        ).to('cuda')
 
-        if 'roberta' in self.model_args.retrieval_model_name_or_path:
+        if 'roberta' in self.config.model_name_or_path:
             question_dataset = TensorDataset(
                 q_seqs['input_ids'],
                 q_seqs['attention_mask'],
@@ -327,7 +344,7 @@ class DenseRetrieval:
                 q_seqs['token_type_ids'],
             )
 
-        question_dataloader = DataLoader(question_dataset, batch_size=self.training_args.per_device_eval_batch_size)
+        question_dataloader = DataLoader(question_dataset, batch_size=self.config.per_device_eval_batch_size)
 
         q_embedding_list = []
         question_iterator = tqdm(question_dataloader, unit='batch')
@@ -336,7 +353,7 @@ class DenseRetrieval:
                 if torch.cuda.is_available():
                     batch = tuple(t.cuda() for t in batch)
 
-                if 'roberta' in self.model_args.retrieval_model_name_or_path:
+                if 'roberta' in self.config.model_name_or_path:
                     q_inputs = {'input_ids': batch[0],
                                 'attention_mask': batch[1]}
                 else:
@@ -481,5 +498,3 @@ class DenseRetrieval:
         D, I = self.indexer.search(q_embs, k)
 
         return D.tolist(), I.tolist()
-
-
