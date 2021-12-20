@@ -14,9 +14,9 @@ emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", 
 
 async def func1(message, bot):
     order = [
-        ("롯데리아-건대점", "불고기 버거 세트 1"),
-        ("피자왕비치킨공주 - 청주점", "불고기 피자 L"),
-        ("무국적식탁-광진점", "1인 우（牛）삼겹 스키야키 우동/1"),
+        ("하우마라탕-강남점", "1人 마라탕/2, 계란볶음밥/1"),
+        ("달떡볶이-강남점", "초승달세트（떡볶이＋튀김1人＋순대1人＋음료1개）"),
+        ("호야생과일쥬스&눈꽃빙수", "리얼생딸기눈꽃빙수/1, 청포도 생과일/1, 아이스 아메리카노/2"),
         ("직접 입력",),
     ]
     embed = discord.Embed(title="Review Generation",
@@ -48,7 +48,37 @@ async def func1(message, bot):
 
     except asyncio.TimeoutError:
         await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
-        return
+        return -1
+
+    reviews = review_gen(food, delvice)
+    embed = discord.Embed(title="Review Generated",
+                          description=f"생성된 리뷰입니다. 하나를 선택하세요.",
+                          color=0x00aaaa)
+    for r_idx in range(len(reviews)):
+        embed.add_field(name=emoji_list[r_idx], value=reviews[r_idx], inline=False)
+    msg = await message.channel.send(embed=embed)
+    for emoji in emoji_list[:len(reviews)]:
+        await msg.add_reaction(emoji)
+
+    def check_emoji(reaction, user):
+        return str(reaction.emoji) in emoji_list[:len(reviews)] and reaction.message.id == msg.id and user.bot == False
+
+    try:
+        reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+        if reaction.emoji in emoji_list[:len(reviews)]:
+            embed = discord.Embed(title="Final Review",
+                          description=f"{restaurant}의 {menu}, 음식 점수 {food}점 배달 및 서비스 점수 {delvice}점을 바탕으로 선택한 리뷰는",
+                          color=0x00aaaa)
+            embed.add_field(name="✔", value=f"{reviews[emoji_list.index(reaction.emoji)-1]}")
+            msg = await message.channel.send(embed=embed)
+            return -1
+
+    except asyncio.TimeoutError:
+        await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
+        return -1
+
+    
+
 
 
 async def func2(message, bot):

@@ -5,7 +5,7 @@ samples/
 .DS_Store
 .idea/
 .ipynb_checkpoints/
-config.py
+crawling/config.py
 Log/
 .log
 *.ipynb

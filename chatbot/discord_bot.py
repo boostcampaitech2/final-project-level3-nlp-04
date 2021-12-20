@@ -32,7 +32,7 @@ async def help(message):
         embed.add_field(name="💤", value="프로그램 종료하기", inline=False)
         msg = await message.channel.send(embed=embed)
 
-        for emoji in emoji_list[:4]:
+        for emoji in emoji_list[:3]:
             await msg.add_reaction(emoji)
         await msg.add_reaction("💤")
 
@@ -41,7 +41,7 @@ async def help(message):
             
         try:
             reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
-            if reaction.emoji in emoji_list[:4]:
+            if reaction.emoji in emoji_list[:3]:
                 ret = await helpfunc[emoji_list.index(reaction.emoji)](reaction.message, bot)
             if reaction.emoji == "💤" or ret == -1:
                 await message.channel.send("🎈 이용해주셔서 감사합니다. 프로그램을 종료합니다. ")
