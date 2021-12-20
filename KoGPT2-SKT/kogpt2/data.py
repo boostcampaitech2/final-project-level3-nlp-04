@@ -59,8 +59,8 @@ class Read_Dataset(Dataset):
 
 		datasets = []
 		for _, row in df.iterrows():
-			row.menu = row.menu[:30]
-			if len(row.review) < 50:
+			# row.menu = row.menu[:30]
+			if len(row.review) < 30:
 				continue
 			sent = tokenizer.bos_token
 			sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
@@ -69,7 +69,7 @@ class Read_Dataset(Dataset):
 
 		for line in datasets:
 			tokenized_line = tokenizer.tokenize(line)
-			tokenized_line = tokenized_line[:199]
+			# tokenized_line = tokenized_line[:199]
 			tokenized_line += [tokenizer.eos_token_id]
 			# ids = []
 			# for token in tokenized_line:

@@ -18,54 +18,39 @@ import pickle
 
 class ReviewDataset(Dataset):
     def __init__(self, df, tokenizer, type):
-        path = f'./{type}_dataset_1e5.pickle'
+        self.data = []
+        path = f'./{type}_dataset.pickle'
+
         if os.path.isfile(path):
             print(f"Loading {type} Dataset of {len(df)}")
             with open(path, 'rb') as file:
-                self.output = pickle.load(file)
+                self.data = pickle.load(file)
+
         else:
             print(f"Tokenizing {type} Dataset of {len(df)}")
-            self.df = df
-            self.output = {'input_ids': [],
-                           'attention_mask': [],
-                           }
 
-            sents = []
-            for _, row in tqdm(self.df.iterrows()):
-                row.menu = row.menu[:30]
-                sent = tokenizer.bos_token
-                sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
-                sent += tokenizer.eos_token
-                sents.append(sent)
+            for _, row in tqdm(df.iterrows()):
+                if len(row.review) < 20:
+                    continue
+                sent = f'음식점은 {row.restaurant} '
+                sent += f'메뉴는 {row.menu} '
+                sent += f'음식 점수는 {int(row.food)}점 '
+                sent += f'서비스 및 배달 점수는 {int(row.delvice)}점 '
+                sent += f'리뷰는 '
+                if type != 'test':
+                    sent += f'{row.review}'
 
-            for sent in tqdm(sents):
-                sent = tokenizer(sent,
-                                 truncation=True,
-                                 max_length=200,
-                                 return_tensors='pt',
-                                 padding="max_length",
-                                 )
-                self.output['input_ids'].append(sent['input_ids'])
-                self.output['attention_mask'].append(sent['attention_mask'])
+                self.data.append(tokenizer.encode(sent))
 
             with open(path, 'wb') as file:
-                pickle.dump(self.output, file)
+                pickle.dump(self.data, file)
         
     def __len__(self):
-        return len(self.output['input_ids'])
+        return len(self.data)
         
     def __getitem__(self, idx):
-        return {'input_ids': self.output['input_ids'][idx],
-                'attention_mask': self.output['attention_mask'][idx],
-                'labels': self.output['input_ids'][idx],
-                }
+        return self.data[idx]
 
-# metric_name = 'glue'
-# metric = load_metric(metric_name, keep_in_memory=True)
-# def compute_metrics(eval_pred):
-#     logits, labels = eval_pred
-#     predictions = np.argmax(logits, axis=-1)
-#     return {metric_name: metric.compute(predictions=predictions, references=labels)}
 
 seed = 42
 random.seed(seed)
@@ -88,121 +73,131 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
 model = GPT2LMHeadModel.from_pretrained('skt/kogpt2-base-v2', pad_token_id=tokenizer.eos_token_id).to(device)
 model.train()
 
-df = pd.read_csv('../StarClassification/pre_1fold_211217dataset.csv')
-df = df.iloc[:100000]
-train_df, test_df = train_test_split(df, test_size=0.1, stratify=df.label, shuffle=True, random_state=seed)
-train_df, valid_df = train_test_split(train_df, test_size=0.2, stratify=train_df.label, shuffle=True, random_state=seed)
+df = pd.read_csv('../StarClassification/combined_211219dataset.csv')
+# df = df.iloc[:1000]
+# df = pd.read_csv('../StarClassification/star_classification.csv')
+train_df, valid_df = train_test_split(df, test_size=0.1, stratify=df.label, shuffle=True, random_state=seed)
+valid_df, test_df = train_test_split(valid_df, test_size=0.1, stratify=valid_df.label, shuffle=True, random_state=seed)
 
+if not os.path.isfile('test_combined_211219dataset.csv'):
+    test_df.to_csv('test_combined_211219dataset.csv', index=False)
 
 train_dataset = ReviewDataset(train_df, tokenizer, 'train')
 valid_dataset = ReviewDataset(valid_df, tokenizer, 'valid')
 test_dataset = ReviewDataset(test_df, tokenizer, 'test')
 
-# train_loader = DataLoader(train_dataset, batch_size=args.train_bs, shuffle=True, pin_memory=True)
-# valid_loader = DataLoader(valid_dataset, batch_size=args.valid_bs, shuffle=True, pin_memory=True)
+count = 0
+epoch = 5
+batch_size = 1
+save_path = 'checkpoint'
 
-args = TrainingArguments(
-    output_dir='./output',
-    num_train_epochs=30,
-    per_device_train_batch_size=56,
-    per_device_eval_batch_size=16,
-    warmup_steps=100,
-    weight_decay=0.01,
-    evaluation_strategy="steps",
-    eval_steps=200,
-    save_steps=200,
-    seed=seed,
-    save_total_limit=1,
-    load_best_model_at_end=True,
-    # metric_for_best_model=metric_name,
-    # gradient_accumulation_steps=3,
-)
+pad = tokenizer.pad_token_id
+def collate(batch):
+    max_length = max(len(b) for b in batch)
+    batch = [b + [pad] * (max_length-len(b)) for b in batch]
+    return batch
+
+
+train_loader = DataLoader(train_dataset,
+                          batch_size=batch_size,
+                          # num_workers=4,
+                          shuffle=True,
+                          pin_memory=True,
+                          # collate_fn=collate
+                          )
+valid_loader = DataLoader(valid_dataset,
+                          batch_size=batch_size,
+                          # num_workers=4,
+                          shuffle=True,
+                          pin_memory=True,
+                          # collate_fn=collate
+                          )
+
+# model.resize_token_embeddings(len(vocab))
+
+learning_rate = 3e-5
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 wandb.init(entity='ssp',
            project='ReviewGeneration',
-           config=args,
            )
 
-trainer = Trainer(
-    model=model,
-    args=args,
-    train_dataset=train_dataset,
-    eval_dataset=valid_dataset,
-    # compute_metrics=compute_metrics,
-    callbacks=[EarlyStoppingCallback(early_stopping_patience=7)],
-)
+test_count = 0
+avg_loss = (0.0, 0.0)
+sents = []
 
-trainer.train()
-# trainer.save_model()
+for epoch in range(1, epoch+1):
+    pbar = tqdm(train_loader)
+    for train_idx, data in enumerate(pbar, 1):
+        optimizer.zero_grad()
+        data = torch.tensor([data]).to(device)
+        outputs = model(data, labels=data)
+        loss, logits = outputs[:2]
+        loss.backward()
+        optimizer.step()
 
-pred = trainer.predict(test_dataset=test_dataset)
+        avg_loss = (avg_loss[0] * 0.99 + loss.item(), avg_loss[1] * 0.99 + 1.0)
+        pbar.set_description('epoch no.{0} train no.{1} loss = {2:.5f} avg_loss = {3:.5f}'.format(epoch, count, loss, avg_loss[0] / avg_loss[1]))
+        count += batch_size
 
-# save
-with open('data.pickle', 'wb') as f:
-    pickle.dump(pred, f, pickle.HIGHEST_PROTOCOL)
+        if (len(train_dataset) // 10) == count:
+            with torch.no_grad():
+                model.eval()
 
-predictions = np.argmax(pred[0], axis=-1)
-try:
-    print(predictions[:10])
-except:
-    print(predictions[0])
+                valid_pbar = tqdm(valid_loader)
+                valid_loss = (0.0, 0.0)
+                for val_idx, valid_data in enumerate(valid_pbar):
+                    valid_data = torch.tensor([valid_data]).to(device)
+                    outputs = model(valid_data, labels=valid_data)
+                    loss = outputs[0].item()
+                    valid_loss = (valid_loss[0] * 0.99 + loss, valid_loss[1] * 0.99 + 1.0)
+                    pbar.set_description(f'valid no.{val_idx} loss = {loss:.5f} avg_loss = {valid_loss[0] / valid_loss[1]:.5f}')
 
-# learning_rate = 3e-5
-# criterion = torch.nn.CrossEntropyLoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-# step = 0
+                wandb.log({
+                    'Train Loss': round(avg_loss[0] / avg_loss[1], 5),
+                    'Valid Loss': round(valid_loss[0] / valid_loss[1], 5)
+                })
+
+
+            for _ in range(5):
+                test_idx = np.random.randint(len(test_dataset))
+                # input_ids = tokenizer.encode(text)
+                input_ids = test_dataset[test_idx]
+                gen_ids = model.generate(torch.tensor([input_ids]).to(device),
+                                         max_length=100,
+                                         repetition_penalty=2.0,
+                                         pad_token_id=tokenizer.pad_token_id,
+                                         eos_token_id=tokenizer.eos_token_id,
+                                         bos_token_id=tokenizer.bos_token_id,
+                                         use_cache=True,
+                                         top_p=np.random.randint(80, 100) / 100,
+                                         top_k=np.random.randint(20, 50),
+                                         temperature=np.random.randint(3, 10) / 10
+                                         )
+                generated = tokenizer.decode(gen_ids[0, :].tolist())
+                print(generated)
+                sents.append(f'epoch {epoch} / count {count} : {generated}')
+            model.train()
+
+
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'Train Loss': round(avg_loss[0] / avg_loss[1], 5),
+        'Valid Loss': round(valid_loss[0] / valid_loss[1], 5),
+    }, f'{save_path}/checkpoint_ep{epoch}.pth')
+
+sents = '\n'.join(sents)
+f = open(f'samples/sample.txt', 'w', encoding="utf-8")
+f.write(sents)
+f.close()
+
+# if __name__ == "__main__":
+#     assert args.save_path
+#     args.save_path = os.path.join('checkpoint/', args.save_path)
+#     if not os.path.isdir(args.save_path):
+#         os.makedirs(args.save_path)
 #
-# for epoch in range(1, args.epoch + 1):
-#     train_pbar = tqdm(train_loader)
-#     for idx, data in enumerate(train_pbar):
-#         optimizer.zero_grad()
-#
-#         data = torch.stack(data[0])  # list of Tensor로 구성되어 있기 때문에 list를 stack을 통해 변환해준다.
-#         data = data.transpose(1, 0)
-#         data = data.to(device)
-#
-#         outputs = model(data, labels=data)
-#         loss, logits = outputs[:2]
-#         loss = loss.to(device)
-#         loss.backward()
-#         avg_loss = (avg_loss[0] * 0.99 + loss, avg_loss[1] * 0.99 + 1.0)
-#         optimizer.step()
-#         step += 1
-#         train_pbar.set_description(f'epoch no.{epoch} loss = {loss:.5f} avg_loss = {avg_loss[0] / avg_loss[1]:.5f}')
-#
-#         if not step % 100:
-#             valid_pbar = tqdm(valid_loader)
-#             for jdx, val_data in enumerate(valid_pbar):
-#                 model.eval()
-#                 model.ge
-#
-#             model.train()
-#
-#     # generator 진행
-#     sent = sample_sequence(model, tok, vocab, sent=word, text_size=200, temperature=0.7, top_p=0.8, top_k=40)
-#     sent = sent.replace("<unused0>", "\n")  # 비효율적이지만 엔터를 위해서 등장
-#     sent = auto_enter(sent)
-#     sent = sent.replace('<pad>', '')
-#     print(sent)
-#
-#     sents.append(f'{epoch} : {sent}')
-#
-#     # 모델 저장
-#     # try:
-#     if not epoch % 25:
-#         torch.save({
-#             'epoch': epoch,
-#             'model_state_dict': model.state_dict(),
-#             'optimizer_state_dict': optimizer.state_dict(),
-#             'loss': loss
-#         }, f'{save_path}/KoGPT2_checkpoint_{str(epoch)}.tar')
-
-
-
-
-
-
-# metrics = trainer.evaluate()
-# metrics['best_f1'] = metrics.pop('eval_f1')
-# wandb.log(metrics)
-# wandb.join()
+#     main(args.epoch, args.save_path, args.load_path, args.samples, args.data_file_path, args.batch_size)

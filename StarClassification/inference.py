@@ -43,17 +43,19 @@ config = AutoConfig.from_pretrained(model_name)
 config.num_labels = 10
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-print('DB Dataset Loading')
+# print('DB Dataset Loading')
 # if not os.path.isfile('./211217db.csv'):
 #     print('Making DB Dataset')
-helper = SqlHelper(**cfg)
-query = "select * from preprocessed_review"
-df = helper.get_df(query)
+# helper = SqlHelper(**cfg)
+# query = "select * from preprocessed_review"
+# df = helper.get_df(query)
 #     df.to_csv('./211217db.csv', index=False, encoding='utf-8-sig')
 # else:
 #     df = pd.read_csv('./211217db.csv')
-print('Complete Reading DB Dataset')
+# print('Complete Reading DB Dataset')
 # df = df.iloc[:10]
+df = pd.read_csv('./211219db.csv')
+df = df.dropna(subset=['preprocessed_review_context'])
 
 X = list(df.preprocessed_review_context)
 X_tokenized = tokenizer(X, padding=True, truncation=True, max_length=300)
@@ -64,7 +66,7 @@ args = TrainingArguments(
 )
 
 sum_pred = None
-for index in range(5):
+for index in range(1):
     print(f'Inference break{index} Start')
     model = AutoModelForSequenceClassification.from_pretrained(glob(f'./output/star*')[index], config=config)
     model.to(device)
@@ -84,4 +86,14 @@ for index in range(5):
     break
 
 df['predict'] = np.argmax(sum_pred, axis=1)
-df.to_csv(f'1fold_211217dataset.csv', index=False)
+df.to_csv(f'backup_fold_211219dataset.csv', index=False)
+
+df = df.rename(columns={'predict': 'label', 'restaurant_name': 'restaurant', 'preprocessed_review_context': 'review'})
+df = df.dropna(subset=['menu', 'review'])
+df['food'] = df.label.apply(lambda x: int(2*(x // 3) + 1))
+df['delvice'] = df.label.apply(lambda x: int(2*(x % 3) + 1))
+
+fold_num = 1
+assert fold_num is not None
+
+df.to_csv(f'{fold_num}fold_211219dataset.csv', index=False)
