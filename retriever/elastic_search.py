@@ -33,7 +33,8 @@ class ElasticSearchRetrieval:
         self.k = config.top_k_retrieval
 
         self.es = Elasticsearch() #Elasticsearch 작동
-        self.es.indices.delete(self.index_name)
+        if self.es.indices.exists(self.index_name):
+            self.es.indices.delete(self.index_name)
 
         if not self.es.indices.exists(self.index_name): #wiki-index가 es.indices와 맞지 않을 때 맞춰주기 위한 조건문
             self.articles = self.set_datas()

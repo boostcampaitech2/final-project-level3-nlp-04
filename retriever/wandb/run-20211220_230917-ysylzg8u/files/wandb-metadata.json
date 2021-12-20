@@ -1,0 +1,24 @@
+{
+    "os": "Linux-4.4.0-210-generic-x86_64-with-debian-buster-sid",
+    "python": "3.7.11",
+    "heartbeatAt": "2021-12-20T14:09:19.013349",
+    "startedAt": "2021-12-20T14:09:17.729153",
+    "docker": null,
+    "gpu": "Tesla V100-SXM2-32GB",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "retrieval_train.py",
+    "codePath": "retriever/retrieval_train.py",
+    "git": {
+        "remote": "https://github.com/boostcampaitech2/final-project-level3-nlp-04.git",
+        "commit": "4ea9504535b8be62b6a4342574803df41b81d47f"
+    },
+    "email": "singon96@naver.com",
+    "root": "/opt/ml/elastic_tmp/final-project-level3-nlp-04",
+    "host": "fb542ea6c2fd",
+    "username": "root",
+    "executable": "/opt/conda/envs/lightweight/bin/python"
+}

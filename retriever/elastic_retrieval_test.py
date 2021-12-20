@@ -7,7 +7,7 @@ from datasets import load_dataset, load_from_disk, concatenate_datasets
 import sys 
 from os import path
 
-from retriever.utils import Config
+from utils import Config
 
 sys.path.append(path.dirname( path.dirname( path.abspath(__file__) ) ))
 from elastic_search import ElasticSearchRetrieval, timer
@@ -29,15 +29,15 @@ if __name__ == "__main__":
             org_dataset["validation"].flatten_indices(),
         ]
     )  # train dev 를 합친 4192 개 질문에 대해 모두 테스트
-    print("*" * 40, "query dataset", "*" * 40)
-    print(full_ds)
+    # print("*" * 40, "query dataset", "*" * 40)
+    # print(full_ds)
 
     retriever = ElasticSearchRetrieval(config)
 
 
     query = "육즙이 많아"
 
-    for k in [30,100]:
+    for k in [30]:
         with timer("bulk query by exhaustive search"):
 
             df, scores = retriever.retrieve(query, full_ds, topk=k)

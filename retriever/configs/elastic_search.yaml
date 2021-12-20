@@ -1,3 +1,3 @@
 top_k_retrieval: 30
 elastic_index_name: 'review-index'
-dataset_path: '/opt/ml/final_project/data/retrieval_dataset'
+dataset_path: '/opt/ml/elastic_tmp/final-project-level3-nlp-04/data/retrieval_dataset'
