@@ -1,5 +1,9 @@
 import os
-import json
+import sys
+from functools import lru_cache
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import time
 from contextlib import contextmanager
 
@@ -8,6 +12,9 @@ from elasticsearch import Elasticsearch
 from tqdm.auto import tqdm
 
 from datasets import load_from_disk, load_dataset, concatenate_datasets
+
+import config as c
+from core.sql_helper import SqlHelper
 
 
 @contextmanager
@@ -26,39 +33,41 @@ class ElasticSearchRetrieval:
         self.k = config.top_k_retrieval
 
         self.es = Elasticsearch() #Elasticsearch 작동
+        self.es.indices.delete(self.index_name)
 
         if not self.es.indices.exists(self.index_name): #wiki-index가 es.indices와 맞지 않을 때 맞춰주기 위한 조건문
-            self.qa_records, self.wiki_articles = self.set_datas()
+            self.articles = self.set_datas()
             self.set_index()
             self.populate_index(es_obj=self.es,
                                 index_name=self.index_name,
-                                evidence_corpus=self.wiki_articles)
+                                evidence_corpus=self.articles)
 
     def set_datas(self):
         """elastic search 에 저장하는 데이터 세팅과정"""
 
-        org_dataset = load_from_disk(self.config.dataset_path)
-        full_ds = concatenate_datasets(
-            [
-                org_dataset["train"].flatten_indices(),
-                org_dataset["validation"].flatten_indices(),
-            ]
-        )
+        self.sql_helper = SqlHelper(**c.DB_CONFIG)
+        with timer('DB 읽어오는 시간'):
+            review_df = self.get_review()
 
+        self.contexts = review_df.preprocessed_review_context.tolist()
+        print(f"Lengths of unique contexts : {len(self.contexts)}")
+        self.ids = list(review_df.index)
 
-        wiki_contexts = list(dict.fromkeys([full_ds[v]['preprocessed_review_context'] for v in range(len(train_file))]))
-        print(wiki_contexts)
+        wiki_articles = [{'document_text': context} for context in self.contexts]
 
-        qa_records = [{'resturant': train_file[i]['restaurant'],
-                       'menu': train_file[i]['menu'],
-                       'review': train_file[i]['review'],
-                       'annotator': train_file[i]['annotator'],
-                       'label' : train_file[i]['label']}
-                      for i in range(len(train_file))]
-        wiki_articles = [{'document_text': wiki_contexts[i]} for i in range(len(wiki_contexts))]
-
-        return qa_records, wiki_articles
+        return wiki_articles
         # return wiki_articles
+
+    @lru_cache(maxsize=None)
+    def get_review(self):
+        query = """
+                SELECT restaurant_name, preprocessed_review_context 
+                FROM preprocessed_review
+                WHERE insert_time < '2021-12-18'
+            """
+        review_df = self.sql_helper.get_df(query)
+        review_df = review_df.drop_duplicates().reset_index(drop=True)
+        return review_df
 
     def set_index(self):
         """index 생성 과정"""
@@ -87,7 +96,7 @@ class ElasticSearchRetrieval:
         }
 
         print('elastic search ping:', self.es.ping())
-        print(self.es.indices.create(index=self.data_args.elastic_index_name, body=index_config, ignore=400))
+        print(self.es.indices.create(index=self.config.elastic_index_name, body=index_config, ignore=400))
 
     def populate_index(self, es_obj, index_name, evidence_corpus):
         """
@@ -97,7 +106,7 @@ class ElasticSearchRetrieval:
 
         for i, rec in enumerate(tqdm(evidence_corpus)):
             try:
-                es_obj.index(index=index_name, id=i, document=rec)
+                es_obj.index(index=index_name, id=i, body=rec)
             except:
                 print(f'Unable to load document {i}.')
 

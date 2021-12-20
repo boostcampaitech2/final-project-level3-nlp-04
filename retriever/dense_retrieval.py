@@ -52,7 +52,9 @@ class DenseRetrieval:
     @lru_cache(maxsize=None)
     def get_review(self):
         query = """
-            SELECT restaurant_name, preprocessed_review_context FROM preprocessed_review
+            SELECT restaurant_name, preprocessed_review_context 
+                FROM preprocessed_review
+                WHERE insert_time < '2021-12-18'
         """
         review_df = self.sql_helper.get_df(query)
         review_df = review_df.drop_duplicates().reset_index(drop=True)
