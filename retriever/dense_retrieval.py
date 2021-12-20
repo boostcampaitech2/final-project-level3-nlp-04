@@ -464,7 +464,8 @@ class DenseRetrieval:
             vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
 
-        query_vec = self.tfidfv.transform([query])
+        self.q_encoder.eval()
+        query_vec = self.q_encoder([query]).detach().cpu().numpy()
         assert (
                 np.sum(query_vec) != 0
         ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
@@ -489,7 +490,8 @@ class DenseRetrieval:
             vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
 
-        query_vecs = self.tfidfv.transform(queries)
+        self.q_encoder.eval()
+        query_vecs = self.q_encoder(queries).detach().cpu().numpy()
         assert (
                 np.sum(query_vecs) != 0
         ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
