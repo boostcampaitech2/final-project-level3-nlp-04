@@ -56,21 +56,19 @@ class Read_Dataset(Dataset):
 		df = pd.read_csv(self.file_path)
 
 		datasets = []
-		print("음식점은 ***, 메뉴는 ***, 음식은 ***점, 서비스와 배달은 ***점<sep>***")
+		print("메뉴는 menu 별점은 star점")
 		for _, row in df.iterrows():
-			row.menu = row.menu[:30]
-			datasets.append([
-				f'음식점은 {row.restaurant}, 메뉴는 {row.menu},'
-				f'음식은 {int(row.food)}점, 서비스와 배달은 {int(row.delvice)}점'
-				f'{self.vocab.sep_token}{row.review}'
-			])
+			datasets.append(['메뉴는 ' + row["menu"] + ' 별점은 ' + str(row["star"]) + '점' + self.vocab.sep_token + row["review"]])
 
+		print("tokenizer ending")
 		for line in datasets:
-			# if len(line[0]) < 45:
-			# 	continue
-			toeknized_line = tokenizer.tokenize(line[0])
-			toeknized_line = toeknized_line[:200]
-			toeknized_line += [vocab.padding_token] * (200 - len(toeknized_line))
+			if not line[0]:
+				break
+			if len(line[0]) < 45:
+				continue
+			toeknized_line = tokenizer.tokenize(line[0][:-1])
+			toeknized_line = toeknized_line[:100]
+			toeknized_line += [vocab.padding_token] * (100 - len(toeknized_line))
 
 			index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
 

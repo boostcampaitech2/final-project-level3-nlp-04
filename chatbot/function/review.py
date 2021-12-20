@@ -1,9 +1,9 @@
+import io
 from discord.ext import commands
 from discord.ext.commands import Bot
-
 import discord
 import asyncio
-
+from chatbot.model.elastic_img.retrieval_test import gen_img
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
 
@@ -25,6 +25,32 @@ async def restaurant_enter(message, bot):
     message = await bot.wait_for(event='message')
 
     return message.content
+
+async def image_enter(message, bot, review):
+    # if "-" in restaurant:
+    #     restaurant_name = restaurant.split("-")[0]
+
+
+    text = review
+    pil_img = gen_img(text)
+
+    embed = discord.Embed(title="FooReview Bot",
+                          description="리뷰 사진을 골라주세요",
+                          color=0x00aaaa)
+    msg = await message.channel.send(embed=embed)
+    for img in pil_img:
+        with io.BytesIO() as image_binary:
+            img.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+    for emoji in emoji_list[:4]:
+        await msg.add_reaction(emoji) # 번호 리스트 제공
+
+    def check_emoji(reaction, user):
+        return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+    reaction, user = await bot.wait_for(event='reaction_add', check=check_emoji)
+    if reaction.emoji in emoji_list:
+        return pil_img[emoji_list.index(reaction.emoji)]
 
 
 async def food_enter(message, bot):

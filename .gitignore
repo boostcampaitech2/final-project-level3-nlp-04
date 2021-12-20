@@ -9,7 +9,8 @@ crawling/config.py
 Log/
 .log
 *.ipynb
-
+*.csv
+*.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

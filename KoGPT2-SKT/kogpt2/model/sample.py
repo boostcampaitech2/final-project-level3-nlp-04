@@ -43,7 +43,7 @@ def sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_
         input_ids = torch.tensor([vocab[vocab.bos_token], ] + vocab[toked]).unsqueeze(0)
 
         input_ids = input_ids.to(ctx)
-        # model = model.to(ctx)
+        model = model.to(ctx)
 
         predicts = model(input_ids)
         pred = predicts[0]
@@ -54,7 +54,7 @@ def sample_sequence(model, tok, vocab, sent, text_size, temperature, top_p, top_
         # top k
         logits = top_k_logits(logits, top_k)
         # top p
-        logits = top_p_logits(logits, top_p)
+        logits = top_p_logits(logits, top_p=top_p)
 
         #logits = logits.to(ctx)
 
