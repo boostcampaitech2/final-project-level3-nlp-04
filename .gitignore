@@ -9,8 +9,17 @@ crawling/config.py
 Log/
 .log
 *.ipynb
+<<<<<<< HEAD
 *.csv
 *.json
+=======
+logs/
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+webserver_config.py
+
+>>>>>>> origin/automation
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

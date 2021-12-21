@@ -54,14 +54,28 @@ class Read_Dataset(Dataset):
 		file = open(self.file_path, 'r', encoding='utf-8')
 
 		df = pd.read_csv(self.file_path)
+		# df = df.iloc[:10000]
+		print("len(df) is ", len(df))
 
 		datasets = []
+<<<<<<< HEAD
 		print("메뉴는 menu 별점은 star점")
 		for _, row in df.iterrows():
 			datasets.append(['메뉴는 ' + row["menu"] + ' 별점은 ' + str(row["star"]) + '점' + self.vocab.sep_token + row["review"]])
+=======
+		for _, row in df.iterrows():
+			# row.menu = row.menu[:30]
+			if len(row.review) < 30:
+				continue
+			sent = tokenizer.bos_token
+			sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
+			# sent += f'음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
+			datasets.append(sent)
+>>>>>>> origin/automation
 
 		print("tokenizer ending")
 		for line in datasets:
+<<<<<<< HEAD
 			if not line[0]:
 				break
 			if len(line[0]) < 45:
@@ -76,10 +90,25 @@ class Read_Dataset(Dataset):
 			#    continue
 			# elif len(index_of_words) < 10:
 			#    continue
+=======
+			tokenized_line = tokenizer.tokenize(line)
+			# tokenized_line = tokenized_line[:199]
+			tokenized_line += [tokenizer.eos_token_id]
+			# ids = []
+			# for token in tokenized_line:
+			# 	if token not in vocab:
+			# 		vocab[token] = len(vocab)
+			# 	ids.append(vocab[token])
+			tokenized_line = vocab[tokenized_line]
+			# print(tokenized_line)
+			# print(tokenizer.sep_token)
+			# exit()
+			# index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
+>>>>>>> origin/automation
 
 			# print(len(index_of_words))
 			# print(line)
-			self.data.append([index_of_words])
+			self.data.append([tokenized_line])
 
 		print(np.shape(self.data))
 
