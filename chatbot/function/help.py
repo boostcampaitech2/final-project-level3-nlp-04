@@ -20,7 +20,7 @@ async def func1(message, bot):
         ("직접 입력",),
     ]
     embed = discord.Embed(title="Review Generation",
-                          description="카테고리를 선택해주세요! 이모지를 눌러주세요",
+                          description="리뷰 작성을 원하는 메뉴를 선택해주세요! 이모지를 눌러주세요",
                           color=0x00aaaa)
 
     for idx in range(len(order)):
@@ -32,55 +32,43 @@ async def func1(message, bot):
     def check_emoji(reaction, user):
         return str(reaction.emoji) in emoji_list[:len(order)] and reaction.message.id == msg.id and user.bot == False
 
-    try:
-        reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
-        if reaction.emoji in emoji_list:
-            if emoji_list.index(reaction.emoji) == len(order) - 1:
-                restaurant = await restaurant_enter(reaction.message, bot)
-                menu = await menu_enter(reaction.message, bot)
-            else:
-                restaurant, menu = order[emoji_list.index(reaction.emoji)]
 
-        food = await food_enter(reaction.message, bot)
-        delvice = await delvice_enter(reaction.message, bot)
-        img = await image_enter(reaction.message, bot, menu+"다 식어서 왔어요")
+    reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+    if reaction.emoji in emoji_list:
+        if emoji_list.index(reaction.emoji) == len(order) - 1:
+            restaurant = await restaurant_enter(reaction.message, bot)
+            menu = await menu_enter(reaction.message, bot)
+        else:
+            restaurant, menu = order[emoji_list.index(reaction.emoji)]
 
-        await message.channel.send(f"음식점은 {restaurant}, 메뉴는 {menu}, 음식 점수는 {food}점, 배달 및 서비스 점수는 {delvice}점")
-        await message.channel.send("훌륭한 사진이군요^^")
-        with io.BytesIO() as image_binary:
-            img.save(image_binary, 'PNG')
-            image_binary.seek(0)
-            await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
-    except asyncio.TimeoutError:
-        await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
-        return -1
+    food = await food_enter(reaction.message, bot)
+    delvice = await delvice_enter(reaction.message, bot)
+    review_text = await review_text_enter(reaction.message, bot,
+                                          restaurant, menu,
+                                          food, delvice)
+    img = await image_enter(reaction.message, bot, menu + review_text)
 
-    reviews = review_gen(food, delvice)
-    embed = discord.Embed(title="Review Generated",
-                          description=f"생성된 리뷰입니다. 하나를 선택하세요.",
-                          color=0x00aaaa)
-    for r_idx in range(len(reviews)):
-        embed.add_field(name=emoji_list[r_idx], value=reviews[r_idx], inline=False)
-    msg = await message.channel.send(embed=embed)
-    for emoji in emoji_list[:len(reviews)]:
-        await msg.add_reaction(emoji)
 
     def check_emoji(reaction, user):
-        return str(reaction.emoji) in emoji_list[:len(reviews)] and reaction.message.id == msg.id and user.bot == False
+        return str(reaction.emoji) in emoji_list[:len(order)] and reaction.message.id == msg.id and user.bot == False
 
-    try:
-        reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
-        if reaction.emoji in emoji_list[:len(reviews)]:
-            embed = discord.Embed(title="Final Review",
-                          description=f"{restaurant}의 {menu}, 음식 점수 {food}점 배달 및 서비스 점수 {delvice}점을 바탕으로 선택한 리뷰는",
-                          color=0x00aaaa)
-            embed.add_field(name="✔", value=f"{reviews[emoji_list.index(reaction.emoji)-1]}")
-            msg = await message.channel.send(embed=embed)
-            return -1
+    # reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
 
-    except asyncio.TimeoutError:
-        await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
-        return -1
+    embed = discord.Embed(title="Final Review",
+                  description=f"{restaurant}의 {menu}, 음식 점수 {food}점 배달 및 서비스 점수 {delvice}점을 바탕으로 선택한 리뷰는",
+                  color=0x00aaaa)
+
+    embed.add_field(name="✔", value=f"{review_text}")
+    msg = await message.channel.send(embed=embed)
+
+
+
+    with io.BytesIO() as image_binary:
+        img.save(image_binary, 'PNG')
+        image_binary.seek(0)
+        await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+    return -1
+
 
     
 

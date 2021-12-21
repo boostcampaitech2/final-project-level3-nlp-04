@@ -13,6 +13,7 @@ def gen_img(text, topk=4):
     context_list, score_list, id_list, answer = retriever.elastic_retrieval(text, topk)
     print(context_list)
     for img_url in answer:
+
         url = str(img_url)
         # urllib.request.urlretrieve(url, "./test.jpg")
         try:

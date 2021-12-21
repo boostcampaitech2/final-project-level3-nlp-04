@@ -1,9 +1,14 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import io
 from discord.ext import commands
 from discord.ext.commands import Bot
 import discord
 import asyncio
 from chatbot.model.elastic_img.retrieval_test import gen_img
+from chatbot.model.kogpt.gen_review import gen_rev
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
 
@@ -26,10 +31,27 @@ async def restaurant_enter(message, bot):
 
     return message.content
 
-async def image_enter(message, bot, review):
-    # if "-" in restaurant:
-    #     restaurant_name = restaurant.split("-")[0]
+async def review_text_enter(message, bot, restaurant, menu, food, delvice):
+    embed = discord.Embed(title="Review Generated",
+                          description=f"생성된 리뷰입니다. 하나를 선택하세요.",
+                          color=0x00aaaa)
+    msg = await message.channel.send(embed=embed)
+    reviews = gen_rev(restaurant, menu, food, delvice)
 
+    for r_idx in range(len(reviews)):
+        embed.add_field(name=emoji_list[r_idx], value=reviews[r_idx], inline=False)
+    msg = await message.channel.send(embed=embed)
+    for emoji in emoji_list[:len(reviews)]:
+        await msg.add_reaction(emoji)
+
+    def check_emoji(reaction, user):
+        return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+    reaction, user = await bot.wait_for(event='reaction_add', check=check_emoji)
+    if reaction.emoji in emoji_list:
+        return reviews[emoji_list.index(reaction.emoji)]
+
+
+async def image_enter(message, bot, review):
 
     text = review
     pil_img = gen_img(text)
