@@ -1,3 +1,0 @@
-top_k_retrieval: 30
-elastic_index_name: 'review-index'
-dataset_path: '/opt/ml/final_project/data/retrieval_dataset'

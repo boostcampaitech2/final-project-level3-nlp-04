@@ -3,35 +3,28 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-import pickle
-from pathlib import Path
-
 import torch
 import wandb
 from datasets import load_from_disk, concatenate_datasets
 
 from dense_retrieval import DenseRetrieval, timer
-from retriever.utils import Config, get_encoders
+from retriever.utils import Config, get_encoders, make_dataset
 
-'''
-retrieval의 성능 확인 
-확인 방법 : 주어진 qeustion에 대해서 top k개의 corpus를 open corpus에서 가져오고 가져온 corpus에 정답이 있는지 확인하는 방식
-* 주어진 dataset의 지문은 open corpus에 포함되어 있다.
-'''
+
 if __name__ == "__main__":
     # get arguments
-    retriever_path = Path(os.path.abspath(__file__)).parent  # retriever folder path
+    retriever_path = os.path.dirname(os.path.abspath(__file__)) # retriever folder path
     encoder_path = os.path.join(retriever_path, 'output')
-    data_path = os.path.join(retriever_path.parent, 'data')
+    data_path = os.path.join(os.path.dirname(retriever_path), 'data')
     configs_path = os.path.join(retriever_path, 'configs')
-    config = Config().get_config(os.path.join(configs_path, 'klue_bert_base_model_test.yaml'))
+    config = Config().get_config(os.path.join(configs_path, 'klue_bert_base_model.yaml'))
 
     tokenizer, p_encoder, q_encoder = get_encoders(config)
     p_encoder.load_state_dict(torch.load(os.path.join(encoder_path, 'p_encoder', f'{config.run_name}.pt')))
     q_encoder.load_state_dict(torch.load(os.path.join(encoder_path, 'q_encoder', f'{config.run_name}.pt')))
 
     if not os.path.exists(config.dataset_path):
-        DenseRetrieval(config, tokenizer, p_encoder, q_encoder, data_path).make_dataset()
+        make_dataset(config, data_path)
     org_dataset = load_from_disk(config.dataset_path)
 
     # 전처리가 되어 있는 open corpus를 사용할지에 따라 분기가 나눠진다.

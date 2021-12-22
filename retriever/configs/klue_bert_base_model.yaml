@@ -23,7 +23,7 @@ config_name: 'klue/bert-base'
 tokenizer_name: 'klue/bert-base'
 
 # DataTrainingArguments
-dataset_path: '/opt/ml/final_project/data/retrieval_dataset'
+dataset_path: '/opt/ml/final-project-level3-nlp-04/data/retrieval_dataset'
 overwrite_cache: False
 preprocessing_num_workers: None
 max_seq_length: 384
@@ -31,6 +31,7 @@ pad_to_max_length: False
 doc_stride: 128
 top_k_retrieval: 30
 use_faiss: False
+elastic_index_name: 'review-index'
 
 # WandBArguments
 project_name: 'final_project_dense_retriever'

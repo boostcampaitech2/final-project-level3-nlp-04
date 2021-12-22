@@ -1,16 +1,13 @@
 import os
-import pickle
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import wandb
 from pathlib import Path
-
-import torch
-from datasets import load_dataset, load_from_disk, concatenate_datasets
-import sys 
-from os import path
-
-from retriever.utils import Config
-
-sys.path.append(path.dirname( path.dirname( path.abspath(__file__) ) ))
 from elastic_search import ElasticSearchRetrieval, timer
+from datasets import load_from_disk, concatenate_datasets
+
+from utils import Config, make_dataset
 
 
 if __name__ == "__main__":
@@ -19,9 +16,11 @@ if __name__ == "__main__":
     encoder_path = os.path.join(retriever_path, 'output')
     data_path = os.path.join(retriever_path.parent, 'data')
     configs_path = os.path.join(retriever_path, 'configs')
-    config = Config().get_config(os.path.join(configs_path, 'elastic_search.yaml'))
+    config = Config().get_config(os.path.join(configs_path, 'klue_bert_base_model.yaml'))
 
     # Test sparse
+    if not os.path.isdir(config.dataset_path):
+        make_dataset(config, data_path)
     org_dataset = load_from_disk(config.dataset_path)
     full_ds = concatenate_datasets(
         [
@@ -34,18 +33,33 @@ if __name__ == "__main__":
 
     retriever = ElasticSearchRetrieval(config)
 
+    # wandb setting
+    os.environ['WANDB_LOG_MODEL'] = 'true'
+    os.environ['WANDB_WATCH'] = 'all'
+    os.environ['WANDB_SILENT'] = 'true'
+    os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
-    query = "육즙이 많아"
+    wandb.init(project=config.project_name,
+               name=config.run_name,
+               entity='ssp',
+               reinit=True,
+               )
 
-    for k in [30,100]:
+    query_list = full_ds['query']
+
+    for k in [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+        df_list = []
         with timer("bulk query by exhaustive search"):
-
-            df, scores = retriever.retrieve(query, full_ds, topk=k)
-            df["correct"] = df.apply(lambda x: query in x["review"], axis=1)
-            print(df["context"])
+            df = retriever.retrieve(query_list, full_ds, topk=k)
+            df["correct"] = df.apply(lambda x: x['original_context'] in x["context"], axis=1)
             accuracy = round(df['correct'].sum() / len(df) * 100, 2)
             print(
                 f"Top-{k}\n"
                 "correct retrieval result by exhaustive search",
                 accuracy,
             )
+
+            wandb.log({
+                'k': k,
+                'accuracy': accuracy,
+            })

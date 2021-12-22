@@ -17,7 +17,7 @@ from tqdm.auto import tqdm
 from typing import List, Tuple, NoReturn, Any, Optional, Union
 from datasets import Dataset, load_from_disk, Features, Value, DatasetDict
 
-from retriever.utils import get_pickle, save_pickle
+from retriever.utils import get_pickle, save_pickle, make_dataset
 from core.sql_helper import SqlHelper
 import config as c
 
@@ -31,7 +31,7 @@ def timer(name):
 
 
 class DenseRetrieval:
-    def __init__(self, config, tokenizer, p_encoder, q_encoder, data_path='../data'):
+    def __init__(self, config, tokenizer, p_encoder, q_encoder, data_path):
         self.config = config
         self.tokenizer = tokenizer
         self.p_encoder = p_encoder
@@ -51,13 +51,19 @@ class DenseRetrieval:
 
     @lru_cache(maxsize=None)
     def get_review(self):
-        query = """
-            SELECT restaurant_name, preprocessed_review_context 
+        pickle_path = os.path.join(self.data_path, 'review_df.csv')
+        if not os.path.exists(pickle_path):
+            query = """
+                SELECT restaurant_name, preprocessed_review_context 
                 FROM preprocessed_review
                 WHERE insert_time < '2021-12-18'
-        """
-        review_df = self.sql_helper.get_df(query)
-        review_df = review_df.drop_duplicates().reset_index(drop=True)
+            """
+            review_df = self.sql_helper.get_df(query)
+            review_df = review_df.drop_duplicates().reset_index(drop=True)
+
+            save_pickle(pickle_path, review_df)
+        else:
+            review_df = get_pickle(pickle_path)
         return review_df
 
     def get_dense_embedding(self) -> NoReturn:
@@ -74,10 +80,12 @@ class DenseRetrieval:
         emb_path = os.path.join(self.data_path, self.config.run_name + '_' + pickle_name)
 
         if os.path.isfile(emb_path):
-            self.p_embedding = get_pickle(emb_path)
+            with timer('Dense Embedding Pickle loading 시간:'):
+                self.p_embedding = get_pickle(emb_path)
             print("Embedding pickle load.")
         else:
             print("Build passage embedding")
+
             p_seqs = self.tokenizer(
                 self.contexts,
                 padding='max_length',
@@ -97,7 +105,8 @@ class DenseRetrieval:
                     p_seqs['token_type_ids'],
                 )
 
-            passage_dataloader = DataLoader(passage_dataset, batch_size=self.config.per_device_eval_batch_size)
+            passage_dataloader = DataLoader(passage_dataset, batch_size=self.config.per_device_eval_batch_size,
+                                            num_workers=4)
 
             self.p_encoder.eval()
 
@@ -124,28 +133,11 @@ class DenseRetrieval:
             save_pickle(emb_path, self.p_embedding)
             print("Embedding pickle saved.")
 
-    def make_dataset(self):
-        df_path = os.path.join(self.data_path, 'retriever_df.csv')
-        df = pd.read_csv(df_path)
-        df['query'] = df['keyword']
-        df['context'] = df['preprocessed_review_context']
-        df['id'] = list(map(str, range(len(df))))
-
-        train_df, valid_df = train_test_split(df, test_size=.3, shuffle=True, random_state=self.config.seed)
-        f = Features({'context': Value(dtype='string', id=None),
-                      'query': Value(dtype='string', id=None),
-                      'id': Value(dtype='string', id=None)})
-
-        datasets = DatasetDict({'train': Dataset.from_pandas(train_df, features=f),
-                                'validation': Dataset.from_pandas(valid_df, features=f)})
-
-        datasets.save_to_disk(os.path.join(self.data_path, 'retrieval_dataset'))
-
     @property
     def get_dataloader(self):
         '''train, validation, test의 dataloader와 dataset를 반환하는 함수'''
         if not os.path.exists(self.config.dataset_path):
-            self.make_dataset()
+            make_dataset(self.config, self.data_path)
         datasets = load_from_disk(self.config.dataset_path)
         print(datasets)
 
@@ -260,6 +252,23 @@ class DenseRetrieval:
 
             return (doc_scores, [self.contexts[doc_indices[i]] for i in range(topk)])
 
+        elif isinstance(query_or_dataset, list):
+            with timer("query exhaustive search"):
+                doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset, k=topk)
+
+            total = []
+            for i in range(len(query_or_dataset)):
+                tmp = {
+                    # Query 와 해당 id 를 반환합니다
+                    "query": query_or_dataset[i],
+                    'restaurant_name': self.review_df.iloc[doc_indices[i]].restaurant_name.tolist(),
+                    'context': ' '.join(self.review_df.iloc[doc_indices[i]].preprocessed_review_context.tolist()),
+                    'score': doc_scores[i],
+                }
+                total.append(tmp)
+            df = pd.DataFrame(total)
+            return df
+
         elif isinstance(query_or_dataset, Dataset):
 
             # Retrieve한 Passage를 pd.DataFrame으로 반환합니다.
@@ -325,6 +334,7 @@ class DenseRetrieval:
     ) -> Tuple[List, List]:
 
         self.q_encoder.eval()
+        self.q_encoder.to('cuda')
 
         q_seqs = self.tokenizer(
             queries,

@@ -1,5 +1,10 @@
 import os
 import sys
+
+import pandas as pd
+from datasets import Features, Value, DatasetDict, Dataset
+from sklearn.model_selection import train_test_split
+
 sys.path.append(os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ))
 import pickle
 import random
@@ -93,3 +98,22 @@ class AverageMeter(object):
 class ReduceLROnPlateauPatch(ReduceLROnPlateau, _LRScheduler):
     def get_lr(self):
         return [ group['lr'] for group in self.optimizer.param_groups ]
+
+
+def make_dataset(config, data_path):
+    df_path = os.path.join(data_path, 'retriever_df.csv')
+    df = pd.read_csv(df_path)
+    df['query'] = df['keyword']
+    df['context'] = df['preprocessed_review_context']
+    df['id'] = list(map(str, range(len(df))))
+
+    train_df, valid_df = train_test_split(df, test_size=.3, shuffle=True, random_state=config.seed)
+    f = Features({'context': Value(dtype='string', id=None),
+                  'query': Value(dtype='string', id=None),
+                  'restaurant_name': Value(dtype='string', id=None),
+                  'id': Value(dtype='string', id=None)})
+
+    datasets = DatasetDict({'train': Dataset.from_pandas(train_df, features=f),
+                            'validation': Dataset.from_pandas(valid_df, features=f)})
+
+    datasets.save_to_disk(os.path.join(data_path, 'retrieval_dataset'))

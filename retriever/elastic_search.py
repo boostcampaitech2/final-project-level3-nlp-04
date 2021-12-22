@@ -2,13 +2,15 @@ import os
 import sys
 from functools import lru_cache
 
+import json
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time
 from contextlib import contextmanager
 
 import pandas as pd
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 from tqdm.auto import tqdm
 
 from datasets import load_from_disk, load_dataset, concatenate_datasets
@@ -32,8 +34,8 @@ class ElasticSearchRetrieval:
         self.index_name = config.elastic_index_name
         self.k = config.top_k_retrieval
 
-        self.es = Elasticsearch() #Elasticsearch 작동
-        self.es.indices.delete(self.index_name)
+        self.es = Elasticsearch(timeout=30, max_retries=10, retry_on_timeout=True) #Elasticsearch 작동
+        # self.es.indices.delete(self.index_name)  # index 가 잘못된 경우 주석을 풀고 돌리세요!
 
         if not self.es.indices.exists(self.index_name): #wiki-index가 es.indices와 맞지 않을 때 맞춰주기 위한 조건문
             self.articles = self.set_datas()
@@ -53,10 +55,11 @@ class ElasticSearchRetrieval:
         print(f"Lengths of unique contexts : {len(self.contexts)}")
         self.ids = list(review_df.index)
 
-        wiki_articles = [{'document_text': context} for context in self.contexts]
+        articles = [{'restaurant_name': row['restaurant_name'],
+                     'review': row['preprocessed_review_context']}
+                    for idx, row in tqdm(review_df.iterrows())]
 
-        return wiki_articles
-        # return wiki_articles
+        return articles
 
     @lru_cache(maxsize=None)
     def get_review(self):
@@ -87,9 +90,12 @@ class ElasticSearchRetrieval:
             'mappings': {
                 'dynamic': 'strict',
                 'properties': {
-                    'document_text': {
+                    'review': {
                         'type': 'text',
                         'analyzer': 'nori_analyzer',
+                    },
+                    'restaurant_name': {
+                        'type': 'text',
                     }
                 }
             }
@@ -104,67 +110,62 @@ class ElasticSearchRetrieval:
         populate : 채우다
         """
 
-        for i, rec in enumerate(tqdm(evidence_corpus)):
-            try:
-                es_obj.index(index=index_name, id=i, body=rec)
-            except:
-                print(f'Unable to load document {i}.')
+        document_texts = [
+            {'_id': i,
+             '_index': self.index_name,
+             '_source': {'review': review['review'],
+                         'restaurant_name': review['restaurant_name']}}
+            for i, review in enumerate(evidence_corpus)
+        ]
+        helpers.bulk(self.es, document_texts)
 
         n_records = es_obj.count(index=index_name)['count']
         print(f'Succesfully loaded {n_records} into {index_name}')
 
-    def retrieve(self, query, dataset, topk=None):
+    def retrieve(self, query, dataset=None, topk=None):
         """ retrieve 과정"""
         if topk is not None:
             self.k = topk
 
-        total = []
-        scores = []
-
         with timer("query exhaustive search"):
-            pbar = tqdm(dataset, desc='elastic search - query: ')
-            for idx, example in enumerate(pbar):
-                # top-k 만큼 context 검색
-                context_list, score_list = self.elastic_retrieval(query)
-                concat_context = []
-                for i in range(len(context_list)):
-                    concat_context.append(context_list[i])
-                tmp = {
-                    'restaurant': example['restaurant'],
-                    'menu': example['menu'],
-                    'review': example['review'],
-                    'food': example['food'],
-                    'delvice': example['delvice'],
-                    'context': ' '.join(concat_context)
-                }
+            # pbar = tqdm(dataset, desc='elastic search - query: ')
+            # for idx, example in enumerate(pbar):
+            # top-k 만큼 context 검색
+            context_list, restaurant_name, score_list = self.elastic_retrieval(query)
+            concat_context = []
+            for i in range(len(context_list)):
+                concat_context.append(' '.join(context_list[i]))
+            tmp = {
+                'restaurant_name': restaurant_name,
+                'context': concat_context,
+                'score': score_list,
+            }
 
-                # if "context" in example.keys() and "answers" in example.keys():
-                #     # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
-                #     tmp["original_context"] = example["context"]
-                #     tmp["answers"] = example["answers"]
+            if dataset is not None:
+                tmp['original_context'] = dataset['context']
 
-                total.append(tmp)
-                scores.append(sum(score_list))
+            df = pd.DataFrame(tmp)
 
-            df = pd.DataFrame(total)
-
-        return df, scores
+        return df
 
     def elastic_retrieval(self, query):#_source 원문데이터만 나옴
-        result = self.search_es(query)
+        response = self.search_es(query)
         # 매칭된 context만 list형태로 만든다.
-        context_list = [hit['_source']['document_text'] for hit in result['hits']['hits']]
-        score_list = [hit['_score'] for hit in result['hits']['hits']]
-        return context_list, score_list
+        context_list = [[hit['_source']['review'] for hit in result['hits']['hits']] for result in response]
+        restaurant_list = [[hit['_source']['restaurant_name'] for hit in result['hits']['hits']] for result in response]
+        score_list = [[hit['_score'] for hit in result['hits']['hits']] for result in response]
+        return context_list, restaurant_list, score_list
+
+    def make_query(self, query, topk):
+        return {'query': {'match': {'review': query}}, 'size': topk}
 
     def search_es(self, query): # match 쿼리로 document_text필드에서 query 검색
-        query_1 = {
-            'query': {
-                'match': {
-                    'document_text': query
-                }
-            }
-        }
+        body = []
+        for i in range(len(query) * 2):
+            if i % 2 == 0:
+                body.append({'index': self.index_name})
+            else:
+                body.append(self.make_query(query[i//2], self.k))
 
-        result = self.es.search(index=self.index_name, body=query_1, size=self.k)
+        result = self.es.msearch(body=body)['responses']
         return result
