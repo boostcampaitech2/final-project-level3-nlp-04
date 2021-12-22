@@ -10,15 +10,18 @@ samples/
 Log/
 .log
 *.ipynb
+
 *.csv
 *.json
 *.pickle
 *.pkl
+
 logs/
 airflow-webserver.pid
 airflow.cfg
 airflow.db
 webserver_config.py
+
 retriever/output/
 
 # Byte-compiled / optimized / DLL files
@@ -49,7 +52,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+chatbot/model/keyword
+chatbot/discord_token.py
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
