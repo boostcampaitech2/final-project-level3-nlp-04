@@ -9,7 +9,7 @@ samples/
 Log/
 .log
 *.ipynb
-#*.csv
+*.csv
 *.json
 *.pickle
 *.pkl
