@@ -1,5 +1,7 @@
+import os
 import sys
-sys.path.append('/opt/ml/final-project-level3-nlp-04')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 
 from core.sql_helper import SqlHelper
 from config import DB_CONFIG
