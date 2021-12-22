@@ -7,10 +7,10 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 import discord
 import asyncio
-from chatbot.model.elastic_img.retrieval_test import gen_img
-from chatbot.model.kogpt.gen_review import gen_rev
-emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
+emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+from elastic_img.retrieval_test import gen_img
+from KoGPT2.gen_review import gen_rev
 
 async def menu_enter(message, bot):
     embed = discord.Embed(title="FooReview Bot",
