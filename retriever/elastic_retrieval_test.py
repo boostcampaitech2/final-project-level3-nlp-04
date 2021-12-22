@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     query_list = full_ds['query']
 
-    for k in [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+    for k in [1, 5, 10, 20, 30]:
         df_list = []
         with timer("bulk query by exhaustive search"):
             df = retriever.retrieve(query_list, full_ds, topk=k)
