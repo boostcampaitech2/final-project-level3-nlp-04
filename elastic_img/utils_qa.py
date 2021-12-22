@@ -1,5 +1,5 @@
 from transformers import HfArgumentParser
-from chatbot.model.elastic_img.arguments import DataTrainingArguments
+from elastic_img.arguments import DataTrainingArguments
 
 
 def get_args():

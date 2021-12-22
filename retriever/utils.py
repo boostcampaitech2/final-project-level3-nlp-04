@@ -54,6 +54,21 @@ def save_pickle(path, file):
         pickle.dump(file, f)
 
 
+def get_path():
+    retriever_path = os.path.dirname(os.path.abspath(__file__))
+    output_path = os.path.join(retriever_path, 'output')
+    configs_path = os.path.join(retriever_path, 'configs')
+    data_path = os.path.join(os.path.dirname(retriever_path), 'data')
+
+    result = {
+        'retriever_path': retriever_path,
+        'output_path': output_path,
+        'configs_path': configs_path,
+        'data_path': data_path,
+    }
+    return result
+
+
 class Config(object):
     def __init__(self, dict_config=None):
         super().__init__()

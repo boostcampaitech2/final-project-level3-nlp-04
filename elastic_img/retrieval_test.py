@@ -1,7 +1,7 @@
 from PIL import Image
 from urllib.request import urlopen
-from chatbot.model.elastic_img.elastic_search import ElasticSearchRetrieval
-from chatbot.model.elastic_img.utils_qa import get_args
+from elastic_img.elastic_search import ElasticSearchRetrieval
+from elastic_img.utils_qa import get_args
 
 def gen_img(text, topk=4):
     tmp_list = []
