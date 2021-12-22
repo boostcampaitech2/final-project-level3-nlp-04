@@ -233,7 +233,7 @@ class styletransfer(nn.Module):
         tgt_mask = self.generate_square_subsequent_mask(gen_input.shape[0]).cuda() # (2, 2)        
 
         # dec_out = self.transformer_decoder(gen_input, enc_out, tgt_mask=tgt_mask)
-        dec_out = self.transformer_decoder(gen_input, enc_out[0], tgt_mask=tgt_mask) # (2, batch, emb_dim)
+        dec_out = self.transformer_decoder(gen_input, enc_out, tgt_mask=tgt_mask) # (2, batch, emb_dim)
         vocab_out = self.matrix_D(dec_out) # (2, batch, n_vocab)
         _, dec_sen = self.dec2sen(vocab_out)
                 
@@ -249,36 +249,20 @@ class styletransfer(nn.Module):
                 break
 
             # tgt_mask = self.generate_square_subsequent_mask(gen_input.shape[0]).cuda()
-            dec_out = self.transformer_decoder(token_idx, enc_out[i], tgt_mask=tgt_mask)
-            vocab_out = self.matrix_D(dec_out)
+            # dec_out = self.transformer_decoder(token_idx, enc_out, tgt_mask=tgt_mask)
+            # vocab_out = self.matrix_D(dec_out)
 
-            # dec_out, vocab_out = self.decoder(enc_out, token_idx, attribute)
+            dec_out, vocab_out = self.decoder(enc_out, token_idx, attribute)
 
             # dec_out, vocab_out = self.decoder(target_enc_out, token_idx, attribute) # (dec_len+2, batch, emb_dim), (dec_len+2, batch, n_vocab)
             # dec_out, vocab_out = self.decoder(enc_out[:i], token_idx, attribute)
 
-            dec_tokens, dec_sen_1 = self.dec2sen(vocab_out)
-            dec_sen += dec_sen_1
+            dec_tokens, dec_sen = self.dec2sen(vocab_out)
+            # dec_tokens, dec_sen_1 = self.dec2sen(vocab_out)
+            # dec_sen += dec_sen_1
 
             # dec_sen += dec_sen
         return dec_sen
 
             
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-    
-
-
-
-
-
-
