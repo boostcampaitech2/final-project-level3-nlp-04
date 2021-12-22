@@ -14,8 +14,3 @@ LOG_CONFIG = {
     'is_info': True,
     'is_error': True,
 }
-<<<<<<< HEAD
-
-
-=======
->>>>>>> f01b2dc5c4b5c145cc602ffb5c4bd2759df74063
