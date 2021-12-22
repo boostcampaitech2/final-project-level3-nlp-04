@@ -1,4 +1,7 @@
 import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import torch
@@ -24,23 +27,20 @@ class RecommendRestaurant:
         es_df = self.es_retriever.retrieve(query, topk=2000)
         ds_df = self.ds_retriever.retrieve(query, topk=2000)
 
-        result = {}
-        for i, q in enumerate(query):
-            es = es_df.iloc[i]
-            ds = ds_df.iloc[i]
+        es_restaurant_name = es_df.restaurant_name.iloc[0]
+        ds_restaurant_name = ds_df.restaurant_name.iloc[0]
+        es_score = es_df.score.iloc[0]
+        ds_score = ds_df.score.iloc[0]
 
-            es_restaurant_name = es.restaurant_name
-            ds_restaurant_name = ds.restaurant_name
-            es_score = es.score
-            ds_score = ds.score
+        es_ds_df = pd.DataFrame()
+        es_ds_df['restaurant_name'] = es_restaurant_name + ds_restaurant_name
+        es_ds_df['score'] = es_score + ds_score
 
-            es_ds_df = pd.DataFrame()
-            es_ds_df['restaurant_name'] = es_restaurant_name + ds_restaurant_name
-            es_ds_df['score'] = es_score + ds_score
+        top_10_restaurant = es_ds_df.restaurant_name.value_counts().index[:10].tolist()
+        top_10_cnt = es_ds_df.restaurant_name.value_counts().head(10).tolist()
 
-            top_10_restaurant = es_ds_df.restaurant_name.value_counts().index[:10].tolist()
-
-            result[q] = top_10_restaurant
+        result = {'top_10_restaurant': top_10_restaurant,
+                  'top_10_cnt': top_10_cnt}
         return result
 
 
@@ -57,10 +57,14 @@ if __name__ == '__main__':
 
     recommend_restaurant = RecommendRestaurant(config, tokenizer, p_encoder, q_encoder, data_path)
 
-    query = ['육즙이 많은']  # 리스트로 받아서 들어가야 해요! 왜? bluk 로 진행하는걸로만 짜서요
-    top_10_restaurant_for_query = recommend_restaurant.get_restaurant(query)
+    while True:
+        query = input('keyword 를 입력해주세요\n')
+        if query == 'exit':
+            print('종료합니다!')
+            break
+        else:
+            query = [query]  # 리스트로 바꿔서 get_restaurant() 함수에 들어가야함
+            top_10_info = recommend_restaurant.get_restaurant(query)
 
-    print(top_10_restaurant_for_query)
-
-
+            print(top_10_info)
 
