@@ -1,15 +1,12 @@
 import os
 import torch
-from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel, TrainingArguments, Trainer, EarlyStoppingCallback, AutoTokenizer
-import numpy as np
+from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
 
 def gen_rev(restaurant, menu, food, delvice):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    tmp = os.path.abspath(__file__)
-    tmp = os.path.dirname(tmp)
-    path = './ReviewGeneration/checkpoint_ep5.pth'
-    path = f'{tmp}/ReviewGeneration/checkpoint_ep5.pth'
-    checkpoint = torch.load(path)
+    model_folder = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(model_folder, 'ReviewGeneration/checkpoint_ep5.pth')
+    checkpoint = torch.load(model_path)
 
     tokenizer = PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2",
                                                         bos_token='<s>', eos_token='</s>', unk_token='<unk>',
