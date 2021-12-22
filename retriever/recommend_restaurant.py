@@ -19,7 +19,7 @@ class RecommendRestaurant:
         self.q_encoder = q_encoder
         self.data_path = data_path
 
-        self.es_retriever = ElasticSearchRetrieval(config)
+        self.es_retriever = ElasticSearchRetrieval(config, data_path)
         self.ds_retriever = DenseRetrieval(config, tokenizer, p_encoder, q_encoder, data_path)
         self.ds_retriever.get_dense_embedding()
 
