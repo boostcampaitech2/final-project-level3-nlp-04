@@ -7,7 +7,6 @@ DB_CONFIG = {
     'passwd': 'jfhdzzangaws2',
 }
 
-
 # LOG 정보
 LOG_CONFIG = {
     'is_log': True,
@@ -15,4 +14,5 @@ LOG_CONFIG = {
     'is_info': True,
     'is_error': True,
 }
+
 

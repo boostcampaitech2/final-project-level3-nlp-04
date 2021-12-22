@@ -58,6 +58,11 @@ class Read_Dataset(Dataset):
 		print("len(df) is ", len(df))
 
 		datasets = []
+<<<<<<< HEAD
+		print("메뉴는 menu 별점은 star점")
+		for _, row in df.iterrows():
+			datasets.append(['메뉴는 ' + row["menu"] + ' 별점은 ' + str(row["star"]) + '점' + self.vocab.sep_token + row["review"]])
+=======
 		for _, row in df.iterrows():
 			# row.menu = row.menu[:30]
 			if len(row.review) < 30:
@@ -66,8 +71,26 @@ class Read_Dataset(Dataset):
 			sent += f'음식점은 {row.restaurant}, 메뉴는 {row.menu}, 음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
 			# sent += f'음식 점수는 {int(row.food)}점, 서비스 및 배달 점수는 {int(row.delvice)}점 리뷰는 {row.review}'
 			datasets.append(sent)
+>>>>>>> origin/automation
 
+		print("tokenizer ending")
 		for line in datasets:
+<<<<<<< HEAD
+			if not line[0]:
+				break
+			if len(line[0]) < 45:
+				continue
+			toeknized_line = tokenizer.tokenize(line[0][:-1])
+			toeknized_line = toeknized_line[:100]
+			toeknized_line += [vocab.padding_token] * (100 - len(toeknized_line))
+
+			index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
+
+			# if len(index_of_words) > 1024:
+			#    continue
+			# elif len(index_of_words) < 10:
+			#    continue
+=======
 			tokenized_line = tokenizer.tokenize(line)
 			# tokenized_line = tokenized_line[:199]
 			tokenized_line += [tokenizer.eos_token_id]
@@ -81,6 +104,7 @@ class Read_Dataset(Dataset):
 			# print(tokenizer.sep_token)
 			# exit()
 			# index_of_words = [vocab[vocab.bos_token], ] + vocab[toeknized_line] + [vocab[vocab.eos_token]]
+>>>>>>> origin/automation
 
 			# print(len(index_of_words))
 			# print(line)
