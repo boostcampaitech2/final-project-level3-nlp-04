@@ -1,5 +1,6 @@
 # etc
 KoGPT2-SKT/checkpoint
+KoGPT2-SKT/wandb
 Devlog/
 samples/
 .DS_Store
