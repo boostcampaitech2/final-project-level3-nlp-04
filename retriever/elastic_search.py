@@ -66,7 +66,7 @@ class ElasticSearchRetrieval:
         pickle_path = os.path.join(self.data_path, 'review_df.pkl')
         if not os.path.exists(pickle_path):
             query = """
-                SELECT restaurant_name, subway, preprocessed_review_context 
+                SELECT * 
                 FROM preprocessed_review
                 WHERE insert_time < '2021-12-18'
                     """
@@ -105,7 +105,10 @@ class ElasticSearchRetrieval:
                     },
                     'subway': {
                         'type': 'text',
-                    }
+                    },
+                    'address': {
+                        'type': 'text',
+                    },
                 }
             }
         }
@@ -124,6 +127,7 @@ class ElasticSearchRetrieval:
              '_index': self.index_name,
              '_source': {'review': review['review'],
                          'subway': review['subway'],
+                         'address': review['address'],
                          'restaurant_name': review['restaurant_name'],
                          }}
             for i, review in enumerate(evidence_corpus)
@@ -142,13 +146,15 @@ class ElasticSearchRetrieval:
             # pbar = tqdm(dataset, desc='elastic search - query: ')
             # for idx, example in enumerate(pbar):
             # top-k 만큼 context 검색
-            context_list, restaurant_name, score_list = self.elastic_retrieval(query)
+            context_list, restaurant_name, address_list, score_list = self.elastic_retrieval(query)
             concat_context = []
             for i in range(len(context_list)):
                 concat_context.append(' '.join(context_list[i]))
             tmp = {
                 'restaurant_name': restaurant_name,
+                'review': context_list,
                 'context': concat_context,
+                'address': address_list,
                 'score': score_list,
             }
 
@@ -164,8 +170,9 @@ class ElasticSearchRetrieval:
         # 매칭된 context만 list형태로 만든다.
         context_list = [[hit['_source']['review'] for hit in result['hits']['hits']] for result in response]
         restaurant_list = [[hit['_source']['restaurant_name'] for hit in result['hits']['hits']] for result in response]
+        address_list = [[hit['_source']['address'] for hit in result['hits']['hits']] for result in response]
         score_list = [[hit['_score'] for hit in result['hits']['hits']] for result in response]
-        return context_list, restaurant_list, score_list
+        return context_list, restaurant_list, address_list, score_list
 
     def make_query(self, query, topk):
         return {'query': {'match': {'review': query}}, 'size': topk}

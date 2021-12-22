@@ -54,7 +54,7 @@ class DenseRetrieval:
         pickle_path = os.path.join(self.data_path, 'review_df.pkl')
         if not os.path.exists(pickle_path):
             query = """
-                SELECT restaurant_name, preprocessed_review_context 
+                SELECT * 
                 FROM preprocessed_review
                 WHERE insert_time < '2021-12-18'
             """
