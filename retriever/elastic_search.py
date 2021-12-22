@@ -2,7 +2,7 @@ import os
 import sys
 from functools import lru_cache
 
-import json
+from retriever.utils import save_pickle, get_pickle
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -12,8 +12,6 @@ from contextlib import contextmanager
 import pandas as pd
 from elasticsearch import Elasticsearch, helpers
 from tqdm.auto import tqdm
-
-from datasets import load_from_disk, load_dataset, concatenate_datasets
 
 import config as c
 from core.sql_helper import SqlHelper
@@ -29,12 +27,13 @@ def timer(name):
 
 class ElasticSearchRetrieval:
     """ElasticSearchRetrieval을 하는데 필요한 함수 입니다."""
-    def __init__(self, config):
+    def __init__(self, config, data_path):
         self.config = config
+        self.data_path = data_path
         self.index_name = config.elastic_index_name
         self.k = config.top_k_retrieval
 
-        self.es = Elasticsearch(timeout=30, max_retries=10, retry_on_timeout=True) #Elasticsearch 작동
+        self.es = Elasticsearch(timeout=300, max_retries=10, retry_on_timeout=True) #Elasticsearch 작동
         # self.es.indices.delete(self.index_name)  # index 가 잘못된 경우 주석을 풀고 돌리세요!
 
         if not self.es.indices.exists(self.index_name): #wiki-index가 es.indices와 맞지 않을 때 맞춰주기 위한 조건문
@@ -56,6 +55,7 @@ class ElasticSearchRetrieval:
         self.ids = list(review_df.index)
 
         articles = [{'restaurant_name': row['restaurant_name'],
+                     'subway': row['subway'],
                      'review': row['preprocessed_review_context']}
                     for idx, row in tqdm(review_df.iterrows())]
 
@@ -63,13 +63,19 @@ class ElasticSearchRetrieval:
 
     @lru_cache(maxsize=None)
     def get_review(self):
-        query = """
-                SELECT restaurant_name, preprocessed_review_context 
+        pickle_path = os.path.join(self.data_path, 'review_df.csv')
+        if not os.path.exists(pickle_path):
+            query = """
+                SELECT restaurant_name, subway, preprocessed_review_context 
                 FROM preprocessed_review
                 WHERE insert_time < '2021-12-18'
-            """
-        review_df = self.sql_helper.get_df(query)
-        review_df = review_df.drop_duplicates().reset_index(drop=True)
+                    """
+            review_df = self.sql_helper.get_df(query)
+            review_df = review_df.drop_duplicates().reset_index(drop=True)
+
+            save_pickle(pickle_path, review_df)
+        else:
+            review_df = get_pickle(pickle_path)
         return review_df
 
     def set_index(self):
@@ -96,6 +102,9 @@ class ElasticSearchRetrieval:
                     },
                     'restaurant_name': {
                         'type': 'text',
+                    },
+                    'subway': {
+                        'type': 'text',
                     }
                 }
             }
@@ -114,7 +123,9 @@ class ElasticSearchRetrieval:
             {'_id': i,
              '_index': self.index_name,
              '_source': {'review': review['review'],
-                         'restaurant_name': review['restaurant_name']}}
+                         'subway': review['subway'],
+                         'restaurant_name': review['restaurant_name'],
+                         }}
             for i, review in enumerate(evidence_corpus)
         ]
         helpers.bulk(self.es, document_texts)

@@ -262,6 +262,7 @@ class DenseRetrieval:
                     # Query 와 해당 id 를 반환합니다
                     "query": query_or_dataset[i],
                     'restaurant_name': self.review_df.iloc[doc_indices[i]].restaurant_name.tolist(),
+                    'review': self.review_df.iloc[doc_indices[i]].preprocessed_review_context.tolist(),
                     'context': ' '.join(self.review_df.iloc[doc_indices[i]].preprocessed_review_context.tolist()),
                     'score': doc_scores[i],
                 }

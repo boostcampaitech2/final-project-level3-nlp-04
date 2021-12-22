@@ -9,6 +9,14 @@ samples/
 Log/
 .log
 *.ipynb
+*.csv
+*.json
+logs/
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+webserver_config.py
+retriever/output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print("*" * 40, "query dataset", "*" * 40)
     print(full_ds)
 
-    retriever = ElasticSearchRetrieval(config)
+    retriever = ElasticSearchRetrieval(config, data_path)
 
     # wandb setting
     os.environ['WANDB_LOG_MODEL'] = 'true'
