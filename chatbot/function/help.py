@@ -5,11 +5,13 @@ import io
 import discord
 import asyncio
 
+from transformers.utils.dummy_pt_objects import DPR_QUESTION_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST
+
 from function.review import *
 from function.category import *
 from function.category_rank import RankReview
 
-emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
 
 async def func1(message, bot):
@@ -68,10 +70,6 @@ async def func1(message, bot):
         image_binary.seek(0)
         await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
     return -1
-
-
-    
-
 
 
 async def func2(message, bot):
@@ -159,3 +157,43 @@ async def func3(message, bot):
     await message.channel.send(f'{message.content}를 검색하시는군요!')
 
     return -1
+
+async def func4(message, bot):
+    embed = discord.Embed(title="Keyword Input",
+                          description="검색하고 싶은 키워드를 입력해주세요.",
+                          color=0x00aaaa)
+    await message.channel.send(embed=embed)
+    message = await bot.wait_for(event='message')
+
+    # message.content가 이제 입력받은 내용.
+
+    # 불러오는 함수에 message.content 집어넣으면
+    keyword = message.content
+
+    # 돌려주고 추천해주는 함수에서 반환값으로 list를 주겠지?
+    # 그럼 난 이 리스트에서 하나를 고르게 해줘야해
+
+    tmpList = ["세진김밥", "세진떡볶이", "세진마라탕", "세진피자", "어깨치킨"]
+
+    embed = discord.Embed(title="Recommended Restaurant",
+                          description=f"입력하신 키워드 {keyword}에 기반하여 추천된 식당입니다.",
+                          color=0x00aaaa)
+
+    for idx in range(len(tmpList)):
+        embed.add_field(name=emoji_list[idx], value=tmpList[idx], inline=False)
+    msg = await message.channel.send(embed=embed) # 다음 메세지 보여줌
+    for emoji in emoji_list[:len(tmpList)]:
+        await msg.add_reaction(emoji) # 메세지에서 보여준 리스트 중 하나 선택하도록 해줌
+
+    def check_emoji(reaction, user):
+        return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+
+    reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)  
+
+    embed = discord.Embed(title="Selected Restaurant",
+                            description=f"{keyword}의 대표 식당인 {tmpList[emoji_list.index(str(reaction.emoji))]}을(를) 선택하셨군요!\n좋은 선택입니다!",
+                            color=0x00aaaa)
+    msg = await message.channel.send(embed=embed)
+    
+    return -1
+    

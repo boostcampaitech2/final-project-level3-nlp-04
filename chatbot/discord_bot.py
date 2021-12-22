@@ -1,17 +1,18 @@
 
 from discord.ext import commands
 from discord.ext.commands import Bot
+from discord_token import get_token
 
 import discord
 import asyncio
 
 from function.help import *
 
-token = 'OTE5ODgyODc3ODIxMzk5MDQw.YbcRsA.Fx2r1ivN-6ZYmKY8IEI1n523rH4' # 아까 메모해 둔 토큰을 입력합니다
+token = get_token() # 아까 메모해 둔 토큰을 입력합니다
 bot = commands.Bot(command_prefix='!')
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "💤"]
-helpfunc = [func1, func2, func3]
+helpfunc = [func1, func2, func3, func4]
         
 @bot.event
 async def on_ready(): # 봇이 준비가 되면 1회 실행되는 부분입니다.
@@ -29,10 +30,11 @@ async def help(message):
         embed.add_field(name="1️⃣", value="리뷰 생성", inline=False)
         embed.add_field(name="2️⃣", value="내 지역 BEST 음식점", inline=False)
         embed.add_field(name="3️⃣", value="키워드로 찾는 음식점", inline=False)
+        embed.add_field(name="4️⃣", value="키워드로 찾는 음식점", inline=False)
         embed.add_field(name="💤", value="프로그램 종료하기", inline=False)
         msg = await message.channel.send(embed=embed)
 
-        for emoji in emoji_list[:3]:
+        for emoji in emoji_list[:4]:
             await msg.add_reaction(emoji)
         await msg.add_reaction("💤")
 
@@ -41,7 +43,7 @@ async def help(message):
             
         try:
             reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
-            if reaction.emoji in emoji_list[:3]:
+            if str(reaction.emoji) in emoji_list[:4]:
                 ret = await helpfunc[emoji_list.index(reaction.emoji)](reaction.message, bot)
             if reaction.emoji == "💤" or ret == -1:
                 await message.channel.send("🎈 이용해주셔서 감사합니다. 프로그램을 종료합니다. ")
