@@ -20,5 +20,3 @@ streamlit==0.72.0
 wandb==0.12.7
 faiss-gpu==1.7.1.post3
 matplotlib==3.5.0
-
-# pip install git+https://github.com/SKT-AI/KoBART#egg=kobart  # 따로 터미널에 치시길
