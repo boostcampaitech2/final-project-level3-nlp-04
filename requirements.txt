@@ -1,0 +1,24 @@
+pymysql==1.0.2
+discored==1.7.3
+pandas==1.1.4
+numpy==1.21.5
+torch==1.7.1
+torchvision==0.8.2
+pytorch-lightning==1.2.1
+datasets==1.16.1
+transformers==4.11.3
+sentence-transformers==2.1.0
+mysqlclient==2.1.0
+bs4=0.0.1
+selenium==4.0.0
+tqdm==4.62.3
+apache-airflow==2.2.0
+elasticsearch==7.10.0
+Pillow==8.4.0
+scikit-learn==0.24.1
+streamlit==0.72.0
+wandb==0.12.7
+faiss-gpu==1.7.1.post3
+matplotlib==3.5.0
+
+# pip install git+https://github.com/SKT-AI/KoBART#egg=kobart  # 따로 터미널에 치시길
