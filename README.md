@@ -1,4 +1,4 @@
-# FooReview
+# 리뷰, 직접 쓰지 말고 이제는 FooReview!
 ## 1. Team
 
 ### 😎 팀원 소개
