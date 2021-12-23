@@ -79,8 +79,14 @@ pip install -r requirements.txt
 pip install git+https://github.com/SKT-AI/KoBART#egg=kobart
 ```
 
-### Run FooReview
+### 3.3 Run FooReview
 ```python3
 cd chatbot
 python3 discord_bot.py
 ```
+
+### 3.4 What You Need Is
+- Discord Token
+- DB config file
+
+## 4. Demo Video
