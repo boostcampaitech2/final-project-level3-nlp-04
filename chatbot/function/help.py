@@ -2,6 +2,7 @@ import os
 import sys
 
 import pandas as pd
+from psutil import disk_io_counters
 import torch
 
 from retriever.utils import Config, get_encoders, get_path
@@ -21,6 +22,7 @@ from chatbot.function.review import *
 from chatbot.function.category import *
 from chatbot.function.category_rank import RankReview
 from chatbot.function.recommend import RecommendRestaurant
+from chatbot.function.style_transfer import review_transfer
 
 emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
@@ -64,9 +66,30 @@ async def func1(message, bot):
                                           food, delvice)
     img = await image_enter(reaction.message, bot, f'{restaurant} {menu} {review_text}')
 
+    embed = discord.Embed(title="Review Style Transfer",
+                description=f"{review_text}의 style transfer된 리뷰를 확인할까요?",
+                color=0x00aaaa)
+
+    msg = await message.channel.send(embed=embed)
+    ox_emoji_list = ["⭕", "❌"]
+    for emoji in ox_emoji_list:
+        await msg.add_reaction(emoji) 
 
     def check_emoji(reaction, user):
-        return str(reaction.emoji) in emoji_list[:len(order)] and reaction.message.id == msg.id and user.bot == False
+        return str(reaction.emoji) in ox_emoji_list and reaction.message.id == msg.id and user.bot == False
+
+
+    reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
+    if reaction.emoji == "⭕":
+
+        transferred_review = review_transfer(review_text)
+        embed = discord.Embed(title="Review Style Transfer",
+                    description=f"{review_text}의 style transfer된 리뷰는",
+                    color=0x00aaaa)
+
+        embed.add_field(name="⭕", value=f"{transferred_review}")
+        msg = await message.channel.send(embed=embed)
+
 
     # reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
 

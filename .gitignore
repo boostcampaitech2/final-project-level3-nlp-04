@@ -13,6 +13,7 @@ Log/
 review_crawling
 .log
 *.ipynb
+style_transfer/
 
 *.csv
 *.json
