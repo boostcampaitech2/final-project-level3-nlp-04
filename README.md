@@ -90,3 +90,15 @@ python3 discord_bot.py
 - DB config file
 
 ## 4. Demo Video
+
+1. Review Generate
+
+https://user-images.githubusercontent.com/52475378/147280764-6e4b3703-4315-44fe-ab73-d67309a3942a.MP4
+
+2. Review based Restaurant Top3
+
+https://user-images.githubusercontent.com/52475378/147280912-8ca96972-2a54-4e2a-bca4-6d8875224524.MP4
+
+3. Keyword based Restaurant Top10
+
+https://user-images.githubusercontent.com/52475378/147280994-497a35b3-cff3-4147-ba91-bb7d39315055.MP4
