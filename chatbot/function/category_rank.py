@@ -1,5 +1,7 @@
+import os
 import sys
-sys.path.append('/opt/ml/final-project-level3-nlp-04')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 
 from core.sql_helper import SqlHelper
 from config import DB_CONFIG
@@ -44,10 +46,8 @@ class RankReview():
                         tmp_cats = cats.split(',')
                         for c in tmp_cats:
                             classif_category[c.lstrip()][old_resta.restaurant_name] = info_list
-        #                    print(c.lstrip(), old_resta.restaurant_name, classif_category[c.lstrip()][old_resta.restaurant_name])
-                    else : #and resta_name not in classif_category[cats]:
+                    else : 
                         classif_category[cats][old_resta.restaurant_name] = info_list
-        #                 print(cats, old_resta.restaurant_name, classif_category[cats][old_resta.restaurant_name])
 
                 old_resta = data
                 tot_stars = 0

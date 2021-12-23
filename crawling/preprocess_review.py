@@ -1,5 +1,5 @@
 import re
-from crawling import config as c
+import config as c
 from core.log_helper import LogHelper
 from core.sql_helper import SqlHelper
 

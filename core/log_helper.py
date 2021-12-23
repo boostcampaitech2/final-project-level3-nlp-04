@@ -2,7 +2,7 @@ import logging
 import os
 import errno
 import datetime
-from crawling import config as c
+import config as c
 
 
 class LogHelper:
