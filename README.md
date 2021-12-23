@@ -67,3 +67,20 @@ GRU모델은 encoder, decoder로 이용한 **_seq2seq with attention_** 방식�
 
 
 ## 3. Run FooReview
+### 3.1 git clone
+```python3
+git clone https://github.com/boostcampaitech2/final-project-level3-nlp-04.git
+cd final-project-level3-nlp-04
+```
+
+### 3.2 Requirements Install
+```python3
+pip install -r requirements.txt
+pip install git+https://github.com/SKT-AI/KoBART#egg=kobart
+```
+
+### Run FooReview
+```python3
+cd chatbot
+python3 discord_bot.py
+```
