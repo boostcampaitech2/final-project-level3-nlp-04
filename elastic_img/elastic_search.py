@@ -19,6 +19,7 @@ class ElasticSearchRetrieval:
         self.data_args = data_args
         self.index_name = data_args.elastic_index_name
         self.k = data_args.top_k_retrieval
+        self.data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
 
         self.es = Elasticsearch() #Elasticsearch 작동
         print(type(self.index_name))
@@ -37,7 +38,7 @@ class ElasticSearchRetrieval:
 
     def set_datas(self):
         """elastic search 에 저장하는 데이터 세팅과정"""
-        df = pd.read_csv("./elastic_image.csv")
+        df = pd.read_csv(os.path.join(self.data_path, "elastic_image.csv"))
         qa_records = []
         reviews = []
         for idx, row in tqdm(df.iterrows(), total=len(df)):
@@ -86,7 +87,7 @@ class ElasticSearchRetrieval:
 
         for i, rec in enumerate(tqdm(evidence_corpus)):
             try:
-                es_obj.index(index=index_name, id=i, document=rec)
+                es_obj.index(index=index_name, id=i, body=rec)
             except:
                 print(f'Unable to load document {i}.')
 
@@ -127,10 +128,9 @@ class ElasticSearchRetrieval:
         context_list = [hit['_source']['document_text'] for hit in result['hits']['hits']]
         score_list = [hit['_score'] for hit in result['hits']['hits']]
         id_list = [int(hit['_id']) for hit in result['hits']['hits']]  # 추가하였습니다
-        data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
-        df = pd.read_csv(os.path.join(data_path, 'elastic_image.csv'))
+        df = pd.read_csv(os.path.join(self.data_path, 'elastic_image.csv'))
         for review in context_list:
-            answer.append(df[df['preprocessed_review_context']==review]['image_url'].values[0])
+            answer.append(df[df['preprocessed_review_context'] == review]['image_url'].values[0])
         return context_list, score_list, id_list, answer
 
     def search_es(self, question_text, topk):

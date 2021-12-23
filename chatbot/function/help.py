@@ -1,6 +1,7 @@
 import os
 import sys
 
+import pandas as pd
 import torch
 
 from retriever.utils import Config, get_encoders, get_path
@@ -25,12 +26,15 @@ emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", 
 
 
 async def func1(message, bot):
-    order = [
-        ("하우마라탕-강남점", "1人 마라탕/2, 계란볶음밥/1"),
-        ("달떡볶이-강남점", "초승달세트（떡볶이＋튀김1人＋순대1人＋음료1개）"),
-        ("호야생과일쥬스&눈꽃빙수", "리얼생딸기눈꽃빙수/1, 청포도 생과일/1, 아이스 아메리카노/2"),
-        ("직접 입력",),
-    ]
+    dataset = load_dataset('samgin/FooReview')['train']
+    df = pd.DataFrame()
+    df['restaurant'] = dataset['restaurant']
+    df['menu'] = dataset['menu']
+
+
+    order = df.sample(3).values.tolist()
+    order.append(["직접 입력",])
+
     embed = discord.Embed(title="Review Generation",
                           description="리뷰 작성을 원하는 메뉴를 선택해주세요! 이모지를 눌러주세요",
                           color=0x00aaaa)
@@ -45,7 +49,7 @@ async def func1(message, bot):
         return str(reaction.emoji) in emoji_list[:len(order)] and reaction.message.id == msg.id and user.bot == False
 
 
-    reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+    reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
     if reaction.emoji in emoji_list:
         if emoji_list.index(reaction.emoji) == len(order) - 1:
             restaurant = await restaurant_enter(reaction.message, bot)
@@ -58,7 +62,7 @@ async def func1(message, bot):
     review_text = await review_text_enter(reaction.message, bot,
                                           restaurant, menu,
                                           food, delvice)
-    img = await image_enter(reaction.message, bot, menu + review_text)
+    img = await image_enter(reaction.message, bot, f'{restaurant} {menu} {review_text}')
 
 
     def check_emoji(reaction, user):
@@ -109,14 +113,14 @@ async def func2(message, bot):
             return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
             
         try:
-            reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+            reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
             if reaction.emoji in emoji_list:
                 ret = await ranked_stores(reaction.message, bot, RankedReview, categorynames[emoji_list.index(reaction.emoji)])
                 if ret == -1:
                     return -1
             
         except asyncio.TimeoutError:
-            await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
+            await message.channel.send('⚡ 60초가 지났습니다. 다시 !HELP를 입력해주세요.')
             return -1
 
         if ret == 0:
@@ -132,43 +136,47 @@ async def func3(message, bot):
 
     recommend_restaurant = RecommendRestaurant(config, tokenizer, p_encoder, q_encoder, path_dict['data_path'])
 
-    embed = discord.Embed(title="Keyword Input",
-                          description="검색하고 싶은 키워드를 입력해주세요.",
-                          color=0x00aaaa)
-    await message.channel.send(embed=embed)
-    message = await bot.wait_for(event='message')
+    while True:
+        embed = discord.Embed(title="Keyword Input",
+                              description="검색하고 싶은 키워드를 입력해주세요.\n종료하려면 exit 를 입력해주세요.",
+                              color=0x00aaaa)
+        await message.channel.send(embed=embed)
+        message = await bot.wait_for(event='message')
 
-    # message.content가 이제 입력받은 내용.
+        if message.content == 'exit':
+            break
 
-    # 불러오는 함수에 message.content 집어넣으면
-    keyword = [message.content]
+        # message.content가 이제 입력받은 내용.
 
-    # 돌려주고 추천해주는 함수에서 반환값으로 list를 주겠지?
-    # 그럼 난 이 리스트에서 하나를 고르게 해줘야해
+        # 불러오는 함수에 message.content 집어넣으면
+        keyword = [' '.join(['#' + keyword for keyword in message.content.split()])]
 
-    response = recommend_restaurant.get_restaurant(keyword)
-    restaurant_list = response['top_10_restaurant']
-    # address_list = response['top_10_address']
+        # 돌려주고 추천해주는 함수에서 반환값으로 list를 주겠지?
+        # 그럼 난 이 리스트에서 하나를 고르게 해줘야해
 
-    embed = discord.Embed(title="Recommended Restaurant",
-                          description=f"입력하신 키워드 {keyword}에 기반하여 추천된 식당입니다.",
-                          color=0x00aaaa)
+        response = recommend_restaurant.get_restaurant(keyword)
+        restaurant_list = response['top_10_restaurant']
+        address_list = response['top_10_address']
 
-    for idx in range(len(restaurant_list)):
-        embed.add_field(name=emoji_list[idx], value=restaurant_list[idx], inline=False)
-    msg = await message.channel.send(embed=embed) # 다음 메세지 보여줌
-    for emoji in emoji_list[:len(restaurant_list)]:
-        await msg.add_reaction(emoji) # 메세지에서 보여준 리스트 중 하나 선택하도록 해줌
+        embed = discord.Embed(title="Recommended Restaurant",
+                              description=f"입력하신 키워드 {keyword}에 기반하여 추천된 식당입니다.",
+                              color=0x00aaaa)
 
-    def check_emoji(reaction, user):
-        return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
+        for idx in range(10):
+            embed.add_field(name=emoji_list[idx], value=restaurant_list[idx], inline=False)
+        msg = await message.channel.send(embed=embed) # 다음 메세지 보여줌
+        for emoji in emoji_list[:len(restaurant_list)]:
+            await msg.add_reaction(emoji) # 메세지에서 보여준 리스트 중 하나 선택하도록 해줌
 
-    reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)  
+        def check_emoji(reaction, user):
+            return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
 
-    embed = discord.Embed(title="Selected Restaurant",
-                            description=f"{keyword}의 대표 식당인 {restaurant_list[emoji_list.index(str(reaction.emoji))]}을(를) 선택하셨군요!\n좋은 선택입니다!",
-                            color=0x00aaaa)
-    msg = await message.channel.send(embed=embed)
+        reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+
+        embed = discord.Embed(title="Selected Restaurant",
+                                description=f"{keyword}의 대표 식당인 {restaurant_list[emoji_list.index(str(reaction.emoji))]}을(를) 선택하셨군요!\n네이버에 {address_list[emoji_list.index(str(reaction.emoji))]} {restaurant_list[emoji_list.index(str(reaction.emoji))]} 를 검색하세요!",
+                                color=0x00aaaa)
+        msg = await message.channel.send(embed=embed)
     
     return -1
     

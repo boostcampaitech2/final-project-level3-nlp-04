@@ -1,6 +1,7 @@
 import os
 import torch
 from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
+from kss import split_sentences
 
 def gen_rev(restaurant, menu, food, delvice):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -34,7 +35,8 @@ def gen_rev(restaurant, menu, food, delvice):
                              )
     for ids in gen_ids:
         generated = tokenizer.decode(ids.tolist())
-        generated = generated.replace(start, "")
+        generated = generated[len(start):].replace('<unk>', '').replace('~~', '~')
+        generated = ' '.join(split_sentences(generated, use_heuristic=True)[:-1])
         review_list.append(generated)
 
     return review_list

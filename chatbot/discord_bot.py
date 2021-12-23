@@ -45,7 +45,7 @@ async def help(message):
             return str(reaction.emoji) in emoji_list and reaction.message.id == msg.id and user.bot == False
             
         try:
-            reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
+            reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
             if str(reaction.emoji) in emoji_list[:3]:
                 ret = await helpfunc[emoji_list.index(reaction.emoji)](reaction.message, bot)
             if reaction.emoji == "💤" or ret == -1:
@@ -54,7 +54,7 @@ async def help(message):
             
         except asyncio.TimeoutError:
             print("error")
-            await message.channel.send('⚡ 20초가 지났습니다. 다시 !HELP를 입력해주세요.')
+            await message.channel.send('⚡ 60초가 지났습니다. 다시 !HELP를 입력해주세요.')
             return
 
 
