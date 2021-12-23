@@ -8,7 +8,9 @@ samples/
 .idea/
 .ipynb_checkpoints/
 */config.py
+config.py
 Log/
+review_crawling
 .log
 *.ipynb
 
