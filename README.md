@@ -57,7 +57,8 @@ Re-Tagging한 데이터들을 바탕으로 학습을 진행하였을 때, 각 �
 <div align="center"><img src="https://user-images.githubusercontent.com/49185035/147274865-975af9d3-dbed-4bbb-85cf-959b8dced6da.png"></div>
 
 ### 2.2.5 Translation standard to dialect
-GRU모델은 encoder, decoder로 이용한 **_seq2seq with attention_** 방식을 이용하였습니다. 하지만 리뷰 데이터를 input으로 넣어줬을 때 생각보다 잘 바뀌지 않아 최종적으로 **_KoBART 모델_** 을 사용하였습니다.<div align="center"><img width="1035" alt="스크린샷 2021-12-22 오후 3 38 11" src="https://user-images.githubusercontent.com/22788924/147271773-c135447c-72cb-48f9-9ada-ff0b4189e72e.png"></div>
+GRU모델은 encoder, decoder로 이용한 **_seq2seq with attention_** 방식을 이용하였습니다. 하지만 리뷰 데이터를 input으로 넣어줬을 때 생각보다 잘 바뀌지 않아 최종적으로 **_KoBART 모델_** 을 사용하였습니다.<div align="center"><img width="1035" alt="스크린샷 2021-12-22 오후 3 38 11" src="https://user-images.githubusercontent.com/22788924/147281715-f53fb06c-4af8-4ba2-b4bd-2cdec7ddc7b2.png"></div>
+
 
 
 ### 2.2.6 Additional Functions
