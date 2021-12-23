@@ -47,22 +47,23 @@ Re-Tagging한 데이터들을 바탕으로 학습을 진행하였을 때, 각 �
 <div align="center"><img src="https://user-images.githubusercontent.com/49185035/147215809-63159fb9-3a7c-47ce-81bc-e804e331ceb3.png"></div>
 
 ### 2.2.3 Generation Model
+리뷰 데이터에 대한 inference 결과, 모델의 크기 등을 고려하여 여러 모델들 중에서도 상대적으로 가볍고 inference 소요시간이 적게 걸리는 **_kogpt2-base-v2 모델_** 을 선택하였습니다. 
+
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147273576-343e1045-e4b2-4a97-a725-0af497db17b0.png"></div>
 
 
 ### 2.2.4 Elastic Search
+생성된 리뷰와 가장 유사한 기존 리뷰를 얻고, 기존 리뷰의 이미지를 사용하는 방법으로 **_Elastic Serach를 이용하여 사진 리뷰 기능을 제공_** 하고자 하였습니다.
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147274865-975af9d3-dbed-4bbb-85cf-959b8dced6da.png"></div>
+
+### 2.2.5 Translation standard to dialect
+GRU모델은 encoder, decoder로 이용한 **_seq2seq with attention_** 방식을 이용하였습니다. 하지만 리뷰 데이터를 input으로 넣어줬을 때 생각보다 잘 바뀌지 않아 최종적으로 **_KoBART 모델_** 을 사용하였습니다.<div align="center"><img width="1035" alt="스크린샷 2021-12-22 오후 3 38 11" src="https://user-images.githubusercontent.com/22788924/147271773-c135447c-72cb-48f9-9ada-ff0b4189e72e.png"></div>
 
 
-### 2.2.5 Additional Functions
+### 2.2.6 Additional Functions
 - **입력받은 키워드를 기반으로 식당 추천** 후 식당 정보 제공
 - 크롤링 데이터를 분석하여 **카테고리별 인기 식당 순위 제공**
 - **자동화 적용**하여 매일 오전 2시 요기요 리뷰 데이터 크롤링 진행
-
-
-### 2.2.7 Translation standard to dialect
-GRU모델은 encoder, decoder로 이용한 seq2seq with attention 방식을 이용하였다. 하지만 리뷰 데이터 input으로 넣어줬을때 생각보다 잘 바뀌지 않았다.
-<img width="1035" alt="스크린샷 2021-12-22 오후 3 38 11" src="https://user-images.githubusercontent.com/22788924/147271773-c135447c-72cb-48f9-9ada-ff0b4189e72e.png">
-
-이런 한계를 극복하기 위해서 KoBART 모델을 사용하였다.
 
 
 ## 3. Run FooReview
