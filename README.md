@@ -57,4 +57,12 @@ Re-Tagging한 데이터들을 바탕으로 학습을 진행하였을 때, 각 �
 - 크롤링 데이터를 분석하여 **카테고리별 인기 식당 순위 제공**
 - **자동화 적용**하여 매일 오전 2시 요기요 리뷰 데이터 크롤링 진행
 
+
+### 2.2.7 Translation standard to dialect
+GRU모델은 encoder, decoder로 이용한 seq2seq with attention 방식을 이용하였다. 하지만 리뷰 데이터 input으로 넣어줬을때 생각보다 잘 바뀌지 않았다.
+<img width="1035" alt="스크린샷 2021-12-22 오후 3 38 11" src="https://user-images.githubusercontent.com/22788924/147271773-c135447c-72cb-48f9-9ada-ff0b4189e72e.png">
+
+이런 한계를 극복하기 위해서 KoBART 모델을 사용하였다.
+
+
 ## 3. Run FooReview
