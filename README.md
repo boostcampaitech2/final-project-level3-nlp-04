@@ -93,12 +93,12 @@ python3 discord_bot.py
 
 1. Review Generate
 
-https://user-images.githubusercontent.com/52475378/147280764-6e4b3703-4315-44fe-ab73-d67309a3942a.MP4
+https://user-images.githubusercontent.com/52475378/147281298-c5b7be8e-5a27-480c-8134-fe3f77bda222.MP4
 
 2. Review based Restaurant Top3
 
-https://user-images.githubusercontent.com/52475378/147280912-8ca96972-2a54-4e2a-bca4-6d8875224524.MP4
+https://user-images.githubusercontent.com/52475378/147281276-e14a298a-3238-4a3e-85d1-d0478ddc5184.MP4
 
 3. Keyword based Restaurant Top10
 
-https://user-images.githubusercontent.com/52475378/147280994-497a35b3-cff3-4147-ba91-bb7d39315055.MP4
+https://user-images.githubusercontent.com/52475378/147281429-7b74e3c5-be4d-4123-b879-75408b6061c4.MP4
