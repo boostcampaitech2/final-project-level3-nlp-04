@@ -1,5 +1,5 @@
 pymysql==1.0.2
-discored==1.7.3
+discord==1.7.3
 pandas==1.1.4
 numpy==1.21.5
 torch==1.7.1
