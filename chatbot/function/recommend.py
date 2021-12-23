@@ -31,16 +31,31 @@ class RecommendRestaurant:
         ds_restaurant_name = ds_df.restaurant_name.iloc[0]
         es_score = es_df.score.iloc[0]
         ds_score = ds_df.score.iloc[0]
+        es_subway = es_df.subway.iloc[0]
+        ds_subway = ds_df.subway.iloc[0]
+        es_address = es_df.address.iloc[0]
+        ds_address = ds_df.address.iloc[0]
 
         es_ds_df = pd.DataFrame()
         es_ds_df['restaurant_name'] = es_restaurant_name + ds_restaurant_name
         es_ds_df['score'] = es_score + ds_score
+        es_ds_df['subway'] = es_subway + ds_subway
+        es_ds_df['address'] = es_address + ds_address
+        es_ds_df = es_ds_df.drop_duplicates(subset=['restaurant_name'])
 
-        top_10_restaurant = es_ds_df.restaurant_name.value_counts().index[:10].tolist()
-        top_10_cnt = es_ds_df.restaurant_name.value_counts().head(10).tolist()
+        gb_df = es_ds_df.groupby('restaurant_name', as_index=False).count()
+        top_10_gb_df = gb_df[['restaurant_name', 'score']].sort_values('score', ascending=False).head(10)
+        subway_address_df = es_ds_df[['restaurant_name', 'subway', 'address']].drop_duplicates(subset=['restaurant_name'])
+        top_10_gb_df = pd.merge(top_10_gb_df, subway_address_df, how='left')
+        top_10_restaurant = top_10_gb_df.restaurant_name.tolist()
+        top_10_cnt = top_10_gb_df.score.tolist()
+        top_10_subway = top_10_gb_df.subway.tolist()
+        top_10_address = top_10_gb_df.address.tolist()
 
         result = {'top_10_restaurant': top_10_restaurant,
-                  'top_10_cnt': top_10_cnt}
+                  'top_10_cnt': top_10_cnt,
+                  'top_10_subway': top_10_subway,
+                  'top_10_address': top_10_address}
         return result
 
 

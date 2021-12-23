@@ -28,7 +28,7 @@ async def ranked_stores(message, bot, data, category, place="강남역"):
                             color=0x00aaaa)
     
     for i in range(len(store_stars)):
-        embed.add_field(name=emoji_list[i], value=f" {store_names[i]} {store_stars[i][0]}점 📝{store_stars[i][1]}건 😁 {store_stars[i][2]}% 🙂 {store_stars[i][3]}% 😫 {store_stars[i][4]}% ❗1건", inline=False)
+        embed.add_field(name=emoji_list[i], value=f" {store_names[i]} {store_stars[i][9]}점 📝{store_stars[i][1]}건 😁 {store_stars[i][2]}% 🙂 {store_stars[i][3]}% 😫 {store_stars[i][4]}% ❗{store_stars[i][10]}건", inline=False)
 
     goback_emoji = ["◀", "⏪"]
 
