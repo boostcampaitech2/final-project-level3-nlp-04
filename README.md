@@ -26,16 +26,21 @@
 
 ## 2. FooReview
 ### 2.1 Data
-![image](https://user-images.githubusercontent.com/49185035/147207482-2fe3af95-d7ca-4d45-bad7-48fc1b5e6343.png)
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147216068-c3236f58-93f4-46e0-8c7d-b9a4af94ae75.png"></div>  
+
 서울의 2호선 지하철역 51개를 배달 장소로 선정하여 **_메뉴, 별점, 리뷰, 카테고리 등_** 의 주요 정보를 **_요기요_** 에서 크롤링 진행하여 AWS의 MySQL DB에 저장하도록 하였습니다.
 ### 2.2 Review Generation
 ### 2.2.1 Review Re-Tagging 
 EDA 진행 중, 별점과 리뷰가 상이한 경우를 확인하였습니다. 이에 따라, **유저가 준 별점은 신뢰도가 떨어지는 지표**라고 판단했고, 리뷰에 대한 새로운 별점 지표를 마련하고자 했습니다. 별점(1~5점)별로 샘플링한 약 14000개의 데이터를 바탕으로 **_요리 관련 별점, 배달 관련 별점을 1, 3, 5 점으로 태깅_** 을 진행하였습니다.  
-![image](https://user-images.githubusercontent.com/49185035/147208764-37d5e440-5b5e-4015-b1db-ef2d01de876c.png)
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147215250-970ff71e-253c-4f5a-9024-f9a92485981b.png"></div>  
+
 
 ### 2.2.2 Classification Model
 Re-Tagging한 데이터들을 바탕으로 학습을 진행하였을 때, 각 모델은 f1 score에서 다음과 같은 차이를 보였습니다. 이에 따라, 별점 Re-Tagging을 위한 모델로는 **_RoBERTa-Large로 5-fold를 돌린 모델_** 을 사용하였습니다.
-![image](https://user-images.githubusercontent.com/49185035/147212520-f6e0b853-5b89-49f4-b62b-39690a97a96f.png)    
-해당 모델로 크롤링한 60만개의 데이터의 점수를 다시 정의하였습니다. 이 데이터들은 **_Huggingface Dataset_** 으로 관리되었고, 이는 **_리뷰 생성과 키워드 검색의 학습 데이터로 사용_** 되었습니다.
-![image](https://user-images.githubusercontent.com/49185035/147212656-e1767903-1553-440f-a019-f6bc0a351906.png)
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147215369-38b705e6-905e-4392-8324-9b3725453d17.png"></div>  
 
+해당 모델로 크롤링한 60만개의 데이터의 점수를 다시 정의하였습니다. 이 데이터들은 **_Huggingface Dataset_** 으로 관리되었고, 이는 **_리뷰 생성과 키워드 검색의 학습 데이터로 사용_** 되었습니다.
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147215809-63159fb9-3a7c-47ce-81bc-e804e331ceb3.png"></div>
+
+
+## 3. Run FooReview
