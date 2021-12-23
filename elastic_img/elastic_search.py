@@ -1,3 +1,4 @@
+import os
 import time
 from contextlib import contextmanager
 import pandas as pd
@@ -126,7 +127,8 @@ class ElasticSearchRetrieval:
         context_list = [hit['_source']['document_text'] for hit in result['hits']['hits']]
         score_list = [hit['_score'] for hit in result['hits']['hits']]
         id_list = [int(hit['_id']) for hit in result['hits']['hits']]  # 추가하였습니다
-        df = pd.read_csv("/opt/ml/final_project/chatbot/model/elastic_img/elastic_image.csv")
+        data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+        df = pd.read_csv(os.path.join(data_path, 'elastic_image.csv'))
         for review in context_list:
             answer.append(df[df['preprocessed_review_context']==review]['image_url'].values[0])
         return context_list, score_list, id_list, answer
