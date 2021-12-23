@@ -264,6 +264,8 @@ class DenseRetrieval:
                     'restaurant_name': self.review_df.iloc[doc_indices[i]].restaurant_name.tolist(),
                     'review': self.review_df.iloc[doc_indices[i]].preprocessed_review_context.tolist(),
                     'context': ' '.join(self.review_df.iloc[doc_indices[i]].preprocessed_review_context.tolist()),
+                    'subway': self.review_df.iloc[doc_indices[i]].subway.tolist(),
+                    'address': self.review_df.iloc[doc_indices[i]].address.tolist(),
                     'score': doc_scores[i],
                 }
                 total.append(tmp)

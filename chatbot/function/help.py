@@ -148,11 +148,7 @@ async def func3(message, bot):
 
     response = recommend_restaurant.get_restaurant(keyword)
     restaurant_list = response['top_10_restaurant']
-    # restaurant_cnt = response['top_10_cnt']
-    
-    # 희락님은
-    # restaurant_list = 함수명
-    # 으로 하시면 됩니당
+    # address_list = response['top_10_address']
 
     embed = discord.Embed(title="Recommended Restaurant",
                           description=f"입력하신 키워드 {keyword}에 기반하여 추천된 식당입니다.",
