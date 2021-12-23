@@ -25,6 +25,10 @@
 - `이상준` Review Generation, Star Classification, Text Style Transfer
 
 ## 2. FooReview
+전체적인 구조입니다.
+<div align="center"><img src="https://user-images.githubusercontent.com/49185035/147221273-f920e176-c68b-44c3-a8a9-755c7bbfa450.png"></div>
+
+
 ### 2.1 Data
 <div align="center"><img src="https://user-images.githubusercontent.com/49185035/147216068-c3236f58-93f4-46e0-8c7d-b9a4af94ae75.png"></div>  
 
@@ -42,5 +46,15 @@ Re-Tagging한 데이터들을 바탕으로 학습을 진행하였을 때, 각 �
 해당 모델로 크롤링한 60만개의 데이터의 점수를 다시 정의하였습니다. 이 데이터들은 **_Huggingface Dataset_** 으로 관리되었고, 이는 **_리뷰 생성과 키워드 검색의 학습 데이터로 사용_** 되었습니다.
 <div align="center"><img src="https://user-images.githubusercontent.com/49185035/147215809-63159fb9-3a7c-47ce-81bc-e804e331ceb3.png"></div>
 
+### 2.2.3 Generation Model
+
+
+### 2.2.4 Elastic Search
+
+
+### 2.2.5 Additional Functions
+- **입력받은 키워드를 기반으로 식당 추천** 후 식당 정보 제공
+- 크롤링 데이터를 분석하여 **카테고리별 인기 식당 순위 제공**
+- **자동화 적용**하여 매일 오전 2시 요기요 리뷰 데이터 크롤링 진행
 
 ## 3. Run FooReview
