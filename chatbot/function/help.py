@@ -64,32 +64,38 @@ async def func1(message, bot):
     review_text = await review_text_enter(reaction.message, bot,
                                           restaurant, menu,
                                           food, delvice)
-    img = await image_enter(reaction.message, bot, f'{restaurant} {menu} {review_text}')
+
+    embed = discord.Embed(title="Image Generation",
+                          description=f"{review_text}의 이미지를 생성할까요?",
+                          color=0x00aaaa)
+
+    msg = await message.channel.send(embed=embed)
+    ox_emoji_list = ["⭕", "❌"]
+    for emoji in ox_emoji_list:
+        await msg.add_reaction(emoji)
+
+    def check_emoji(reaction, user):
+        return str(reaction.emoji) in ox_emoji_list and reaction.message.id == msg.id and user.bot == False
+
+    reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
+
+    flag = False
+    if reaction.emoji == "⭕":
+        flag = True
+        img = await image_enter(reaction.message, bot, f'{restaurant} {menu} {review_text}')
 
     embed = discord.Embed(title="Review Style Transfer",
                 description=f"{review_text}의 style transfer된 리뷰를 확인할까요?",
                 color=0x00aaaa)
 
     msg = await message.channel.send(embed=embed)
-    ox_emoji_list = ["⭕", "❌"]
     for emoji in ox_emoji_list:
         await msg.add_reaction(emoji) 
 
-    def check_emoji(reaction, user):
-        return str(reaction.emoji) in ox_emoji_list and reaction.message.id == msg.id and user.bot == False
-
-
     reaction, user = await bot.wait_for(event='reaction_add', timeout=60.0, check=check_emoji)
     if reaction.emoji == "⭕":
-
         transferred_review = review_transfer(review_text)
-        embed = discord.Embed(title="Review Style Transfer",
-                    description=f"{review_text}의 style transfer된 리뷰는",
-                    color=0x00aaaa)
-
-        embed.add_field(name="⭕", value=f"{transferred_review}")
-        msg = await message.channel.send(embed=embed)
-
+        review_text = transferred_review
 
     # reaction, user = await bot.wait_for(event='reaction_add', timeout=20.0, check=check_emoji)
 
@@ -100,12 +106,11 @@ async def func1(message, bot):
     embed.add_field(name="✔", value=f"{review_text}")
     msg = await message.channel.send(embed=embed)
 
-
-
-    with io.BytesIO() as image_binary:
-        img.save(image_binary, 'PNG')
-        image_binary.seek(0)
-        await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+    if flag:
+        with io.BytesIO() as image_binary:
+            img.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
     return -1
 
 

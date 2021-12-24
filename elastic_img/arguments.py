@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
-from transformers import TrainingArguments as OriginTrainingArguments, IntervalStrategy
+from transformers import TrainingArguments as OriginTrainingArguments#, IntervalStrategy
 
 
 @dataclass
@@ -31,10 +31,10 @@ class TrainingArguments(OriginTrainingArguments):
         default='roberta-small_elastic_bs16',  # 이게 제일 성능이 좋았음
         metadata={"help": "retrieval encoder model folder name"},
     )
-    evaluation_strategy: IntervalStrategy = field(
-        default='steps',
-        metadata={"help": "The evaluation strategy to use."},
-    )
+    # evaluation_strategy: IntervalStrategy = field(
+    #     default='steps',
+    #     metadata={"help": "The evaluation strategy to use."},
+    # )
     per_device_train_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )

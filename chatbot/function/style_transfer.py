@@ -4,11 +4,10 @@ import torch
 from kobart import get_kobart_tokenizer
 from transformers.models.bart import BartForConditionalGeneration
 
-sys.path.insert(0, "/opt/ml/final-project-level3-nlp-04/style_transfer")
-import style_transfer
 
 def review_transfer(review_text):
-    model = BartForConditionalGeneration.from_pretrained('style_transfer')
+    # model = BartForConditionalGeneration.from_pretrained('samgin/Style_transfer')
+    model = BartForConditionalGeneration.from_pretrained('/opt/ml/final-project-level3-nlp-04/style_transfer')
     tokenizer = get_kobart_tokenizer()
 
 
